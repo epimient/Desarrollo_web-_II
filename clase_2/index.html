@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clase 2 FastAPI | Modelos, validaciones y estructura</title>
+    <meta
+      name="description"
+      content="Diapositivas para una clase de FastAPI sobre modelos Pydantic, validaciones, response_model, status_code, HTTPException, APIRouter y estructura profesional."
+    >
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <button class="icon-button" id="toggleNav" type="button" aria-label="Abrir indice">
+          <span class="menu-icon"></span>
+        </button>
+
+        <div class="brand">
+          <span>FastAPI · Clase 2</span>
+          <strong>Modelos, validaciones y estructura correcta</strong>
+        </div>
+
+        <div class="topbar-actions">
+          <div class="counter" aria-live="polite">
+            <span id="currentSlide">01</span>
+            <span>/</span>
+            <span id="totalSlides">00</span>
+          </div>
+          <button class="icon-button" id="fullscreenButton" type="button" aria-label="Pantalla completa">
+            <span class="fullscreen-icon"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="progress-track" aria-hidden="true">
+        <span id="progressBar"></span>
+      </div>
+
+      <div class="stage">
+        <aside class="sidebar" id="sidebar" aria-label="Indice de diapositivas">
+          <div class="sidebar-heading">Ruta de clase</div>
+          <ol id="slideList"></ol>
+        </aside>
+
+        <main class="deck" id="deck" tabindex="-1">
+          <article class="slide is-active hero-slide" data-title="Inicio">
+            <div class="slide-grid two-columns">
+              <section>
+                <p class="eyebrow">API de Items Academicos</p>
+                <h1>Modelos, validaciones y estructura correcta</h1>
+                <p class="lead">
+                  Hoy la API deja de ser un archivo suelto y empieza a parecerse a un backend real:
+                  contratos de datos, errores correctos, documentacion automatica y carpetas con responsabilidades.
+                </p>
+              </section>
+              <section class="signal-panel">
+                <p class="panel-label">Idea central</p>
+                <p>
+                  Una API profesional no solo responde datos. Tambien decide que acepta,
+                  que devuelve, como comunica errores y como organiza su codigo para crecer.
+                </p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Proposito">
+            <p class="eyebrow">1 · Proposito de la clase</p>
+            <h2>De consumir una API a construir una API mantenible</h2>
+            <div class="content-grid">
+              <section>
+                <h3>Venimos de</h3>
+                <ul>
+                  <li>Consumir una API externa con <code>requests</code>.</li>
+                  <li>Crear una API sencilla con FastAPI.</li>
+                  <li>Escribir todo en un mismo archivo para aprender rapido.</li>
+                </ul>
+              </section>
+              <section>
+                <h3>Vamos hacia</h3>
+                <ul>
+                  <li>Validar lo que entra.</li>
+                  <li>Controlar lo que sale.</li>
+                  <li>Manejar errores con codigos HTTP.</li>
+                  <li>Separar rutas, esquemas, servicios y configuracion.</li>
+                </ul>
+              </section>
+            </div>
+            <p class="teacher-note">
+              Enfatiza que organizar el proyecto no es decoracion: es una forma de evitar que
+              la aplicacion se vuelva dificil de explicar, probar y modificar.
+            </p>
+          </article>
+
+          <article class="slide" data-title="Objetivos">
+            <p class="eyebrow">2 · Objetivo de aprendizaje</p>
+            <h2>Al finalizar, el estudiante debe poder explicar y construir esto</h2>
+            <div class="check-grid">
+              <div>Crear modelos con <code>BaseModel</code>.</div>
+              <div>Validar entrada con tipos y <code>Field</code>.</div>
+              <div>Diferenciar modelos de creacion, actualizacion y respuesta.</div>
+              <div>Usar <code>response_model</code> para controlar la salida.</div>
+              <div>Definir <code>status_code</code> en rutas.</div>
+              <div>Lanzar errores con <code>HTTPException</code>.</div>
+              <div>Dividir la API con carpetas.</div>
+              <div>Usar <code>APIRouter</code> por modulo.</div>
+            </div>
+          </article>
+
+          <article class="slide question-slide" data-title="Pregunta inicial">
+            <p class="eyebrow">3 · Apertura</p>
+            <h2>Si una API recibe cualquier dato sin validarlo, que problemas podrian aparecer?</h2>
+            <div class="answer-cloud">
+              <span>Datos incompletos</span>
+              <span>Tipos incorrectos</span>
+              <span>Nombres vacios</span>
+              <span>Errores dificiles</span>
+              <span>Respuestas inconsistentes</span>
+              <span>Datos sensibles expuestos</span>
+              <span>Codigo dificil de mantener</span>
+            </div>
+            <p class="teacher-note">
+              Transicion sugerida: hoy vamos a ponerle reglas a nuestra API. Vamos a decirle
+              que datos acepta, que datos responde y como debe organizarse el proyecto.
+            </p>
+          </article>
+
+          <article class="slide" data-title="Mapa mental">
+            <p class="eyebrow">4 · Mapa de la clase</p>
+            <h2>La API profesional se construye con contratos y responsabilidades</h2>
+            <div class="timeline">
+              <div>
+                <strong>Entrada</strong>
+                <span>Modelos Pydantic validan el cuerpo JSON.</span>
+              </div>
+              <div>
+                <strong>Proceso</strong>
+                <span>Servicios y routers separan la logica.</span>
+              </div>
+              <div>
+                <strong>Salida</strong>
+                <span><code>response_model</code> filtra y documenta la respuesta.</span>
+              </div>
+              <div>
+                <strong>Errores</strong>
+                <span><code>HTTPException</code> comunica fallos con codigos correctos.</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Pydantic">
+            <p class="eyebrow">5 · Concepto 1</p>
+            <h2>Que es Pydantic?</h2>
+            <div class="slide-grid two-columns">
+              <section>
+                <p>
+                  Pydantic es la libreria que FastAPI usa para declarar modelos de datos.
+                  Un modelo describe la forma que deben tener los datos que entran o salen.
+                </p>
+                <p class="definition">
+                  En palabras simples: Pydantic nos permite decirle a Python
+                  "este dato debe tener esta forma".
+                </p>
+              </section>
+              <section class="doc-card">
+                <h3>Referencia oficial</h3>
+                <p>
+                  FastAPI documenta que para declarar un cuerpo de solicitud se usan modelos
+                  de Pydantic, y que esos tipos permiten conversion, validacion y documentacion automatica.
+                </p>
+                <a href="https://fastapi.tiangolo.com/tutorial/body/" target="_blank" rel="noreferrer">
+                  FastAPI · Request Body
+                </a>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide code-slide" data-title="BaseModel">
+            <p class="eyebrow">6 · Primer contrato</p>
+            <h2>Modelo base para crear un item</h2>
+            <pre><code>from pydantic import BaseModel, Field
+
+
+class ItemCreate(BaseModel):
+    name: str = Field(min_length=3, max_length=80)
+    description: str | None = None
+    category: str
+    source: str | None = None</code></pre>
+            <div class="explain-list">
+              <p><code>BaseModel</code> permite crear modelos de datos.</p>
+              <p><code>Field</code> agrega reglas como longitud minima o maxima.</p>
+              <p><code>str | None = None</code> significa que el campo es opcional.</p>
+              <p><code>category: str</code> es obligatorio porque no tiene valor por defecto.</p>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Field">
+            <p class="eyebrow">7 · Validaciones con Field</p>
+            <h2>Las reglas viven cerca de los datos</h2>
+            <div class="content-grid">
+              <section>
+                <h3>Ejemplo</h3>
+                <pre><code>name: str = Field(min_length=3, max_length=80)
+category: str = Field(min_length=3, max_length=50)</code></pre>
+                <p>
+                  No escribimos un <code>if</code> manual para revisar el largo del nombre.
+                  FastAPI y Pydantic lo hacen al recibir el request.
+                </p>
+              </section>
+              <section class="doc-card">
+                <h3>Referencia oficial</h3>
+                <p>
+                  FastAPI muestra que <code>Field</code> se importa desde <code>pydantic</code>
+                  y permite declarar validaciones dentro de los atributos del modelo.
+                </p>
+                <a href="https://fastapi.tiangolo.com/tutorial/body-fields/" target="_blank" rel="noreferrer">
+                  FastAPI · Body - Fields
+                </a>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="422">
+            <p class="eyebrow">8 · Validacion automatica</p>
+            <h2>Cuando el JSON no cumple, FastAPI responde por nosotros</h2>
+            <div class="content-grid">
+              <section>
+                <h3>Body invalido</h3>
+                <pre><code>{
+  "name": "Pi",
+  "description": "Nombre demasiado corto",
+  "category": "pokemon"
+}</code></pre>
+              </section>
+              <section>
+                <h3>Resultado esperado</h3>
+                <p>
+                  Como <code>name</code> tiene menos de 3 caracteres, la solicitud no puede
+                  procesarse con el contrato definido.
+                </p>
+                <div class="status-card danger">
+                  <strong>422</strong>
+                  <span>Unprocessable Entity</span>
+                </div>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="No un modelo">
+            <p class="eyebrow">9 · Concepto 2</p>
+            <h2>Por que no usar el mismo modelo para todo?</h2>
+            <div class="slide-grid two-columns">
+              <section>
+                <h3>Modelo tentador, pero problematico</h3>
+                <pre><code>class Item(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+    category: str
+    source: str | None = None</code></pre>
+              </section>
+              <section>
+                <h3>Problema</h3>
+                <p>
+                  Al crear un item, el cliente no deberia enviar el <code>id</code>.
+                  Ese identificador lo genera la base de datos o la logica interna.
+                </p>
+                <p>
+                  Pero cuando la API responde, el cliente si necesita recibir el <code>id</code>.
+                  Por eso separamos modelos.
+                </p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide code-slide" data-title="Modelos sugeridos">
+            <p class="eyebrow">10 · Modelos sugeridos</p>
+            <h2><code>app/schemas/item_schema.py</code></h2>
+            <pre><code>from pydantic import BaseModel, Field
+
+
+class ItemCreate(BaseModel):
+    name: str = Field(min_length=3, max_length=80)
+    description: str | None = None
+    category: str = Field(min_length=3, max_length=50)
+    source: str | None = None
+
+
+class ItemUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=3, max_length=80)
+    description: str | None = None
+    category: str | None = Field(default=None, min_length=3, max_length=50)
+    source: str | None = None
+
+
+class ItemResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+    category: str
+    source: str | None = None
+
+
+class ExternalItemResponse(BaseModel):
+    external_id: int
+    name: str
+    source: str</code></pre>
+          </article>
+
+          <article class="slide" data-title="Create Update Response">
+            <p class="eyebrow">11 · Separacion de modelos</p>
+            <h2>Cada modelo responde una pregunta distinta</h2>
+            <div class="model-grid">
+              <section>
+                <h3>ItemCreate</h3>
+                <p>Que puede enviar el cliente cuando crea?</p>
+                <p>No incluye <code>id</code>.</p>
+              </section>
+              <section>
+                <h3>ItemUpdate</h3>
+                <p>Que puede enviar el cliente cuando actualiza?</p>
+                <p>Todos los campos son opcionales.</p>
+              </section>
+              <section>
+                <h3>ItemResponse</h3>
+                <p>Que devuelve nuestra API al cliente?</p>
+                <p>Si incluye <code>id</code>.</p>
+              </section>
+              <section>
+                <h3>ExternalItemResponse</h3>
+                <p>Como adaptamos datos de una API externa?</p>
+                <p>Devolvemos solo lo necesario.</p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide code-slide" data-title="Update parcial">
+            <p class="eyebrow">12 · Actualizacion parcial</p>
+            <h2><code>ItemUpdate</code> evita obligar al cliente a reenviar todo</h2>
+            <div class="content-grid">
+              <section>
+                <h3>Body valido</h3>
+                <pre><code>{
+  "name": "Nuevo nombre"
+}</code></pre>
+              </section>
+              <section>
+                <h3>Aplicacion en el router</h3>
+                <pre><code>update_data = item_data.model_dump(exclude_unset=True)
+
+for key, value in update_data.items():
+    item[key] = value</code></pre>
+                <p>
+                  <code>exclude_unset=True</code> incluye solo los campos enviados por el cliente.
+                  Asi no borramos accidentalmente <code>description</code>, <code>category</code> o <code>source</code>.
+                </p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Response model">
+            <p class="eyebrow">13 · Concepto 3</p>
+            <h2><code>response_model</code> controla la forma de salida</h2>
+            <div class="slide-grid two-columns">
+              <section>
+                <pre><code>@router.post(
+    "/items",
+    response_model=ItemResponse,
+    status_code=201
+)
+def create_item(item: ItemCreate):
+    ...</code></pre>
+                <ul>
+                  <li>El cliente envia datos con forma de <code>ItemCreate</code>.</li>
+                  <li>La API responde datos con forma de <code>ItemResponse</code>.</li>
+                  <li>La documentacion queda alineada con el contrato.</li>
+                </ul>
+              </section>
+              <section class="doc-card">
+                <h3>Referencia oficial</h3>
+                <p>
+                  FastAPI usa <code>response_model</code> para documentar, validar,
+                  convertir y filtrar los datos de salida.
+                </p>
+                <a href="https://fastapi.tiangolo.com/es/tutorial/response-model/" target="_blank" rel="noreferrer">
+                  FastAPI · Modelo de Response
+                </a>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide code-slide" data-title="Proteccion de salida">
+            <p class="eyebrow">14 · Seguridad de respuesta</p>
+            <h2>El modelo de respuesta tambien protege lo que exponemos</h2>
+            <div class="content-grid">
+              <section>
+                <h3>Dato interno</h3>
+                <pre><code>user = {
+    "id": 1,
+    "name": "Laura",
+    "email": "laura@email.com",
+    "password": "123456"
+}</code></pre>
+              </section>
+              <section>
+                <h3>Contrato publico</h3>
+                <pre><code>class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str</code></pre>
+                <p>
+                  Si la ruta usa <code>response_model=UserResponse</code>, el campo
+                  <code>password</code> no forma parte de la salida publica.
+                </p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Codigos HTTP">
+            <p class="eyebrow">15 · Concepto 4</p>
+            <h2>Codigos de estado HTTP: la API dice que paso</h2>
+            <div class="status-table">
+              <div><strong>200</strong><span>OK</span><p>Consulta o actualizacion exitosa.</p></div>
+              <div><strong>201</strong><span>Created</span><p>Se creo un recurso.</p></div>
+              <div><strong>204</strong><span>No Content</span><p>Se elimino algo y no se devuelve cuerpo.</p></div>
+              <div><strong>400</strong><span>Bad Request</span><p>Problema logico en la solicitud.</p></div>
+              <div><strong>404</strong><span>Not Found</span><p>El recurso no existe.</p></div>
+              <div><strong>422</strong><span>Unprocessable Entity</span><p>Fallo validacion de Pydantic.</p></div>
+            </div>
+          </article>
+
+          <article class="slide" data-title="status_code">
+            <p class="eyebrow">16 · <code>status_code</code></p>
+            <h2>El codigo esperado se declara en el decorador</h2>
+            <div class="slide-grid two-columns">
+              <section>
+                <pre><code>from fastapi import status
+
+
+@router.post(
+    "/",
+    response_model=ItemResponse,
+    status_code=status.HTTP_201_CREATED
+)
+def create_item(item: ItemCreate):
+    ...</code></pre>
+              </section>
+              <section class="doc-card">
+                <h3>Referencia oficial</h3>
+                <p>
+                  FastAPI permite declarar <code>status_code</code> en operaciones como
+                  <code>@app.get()</code>, <code>@app.post()</code>, <code>@app.put()</code> y <code>@app.delete()</code>.
+                </p>
+                <a href="https://fastapi.tiangolo.com/es/tutorial/response-status-code/" target="_blank" rel="noreferrer">
+                  FastAPI · Codigo de Estado del Response
+                </a>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="HTTPException">
+            <p class="eyebrow">17 · Concepto 5</p>
+            <h2>Errores profesionales con <code>HTTPException</code></h2>
+            <div class="content-grid">
+              <section>
+                <h3>Improvisado</h3>
+                <pre><code>return {"error": "No encontrado"}</code></pre>
+                <p>El cliente recibe un JSON, pero no necesariamente un codigo HTTP correcto.</p>
+              </section>
+              <section>
+                <h3>Correcto</h3>
+                <pre><code>raise HTTPException(
+    status_code=status.HTTP_404_NOT_FOUND,
+    detail="El recurso solicitado no existe"
+)</code></pre>
+                <p>La ejecucion se interrumpe y FastAPI devuelve una respuesta HTTP clara.</p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Errores docs">
+            <p class="eyebrow">18 · Error como respuesta HTTP</p>
+            <h2><code>HTTPException</code> no se retorna: se lanza</h2>
+            <div class="slide-grid two-columns">
+              <section>
+                <p>
+                  FastAPI explica que <code>HTTPException</code> es una excepcion normal de Python,
+                  con datos adicionales relevantes para APIs. Por eso se usa <code>raise</code>.
+                </p>
+                <pre><code>{
+  "detail": "El recurso solicitado no existe"
+}</code></pre>
+              </section>
+              <section class="doc-card">
+                <h3>Referencia oficial</h3>
+                <a href="https://fastapi.tiangolo.com/es/tutorial/handling-errors/" target="_blank" rel="noreferrer">
+                  FastAPI · Manejo de Errores
+                </a>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Un archivo">
+            <p class="eyebrow">19 · Concepto 6</p>
+            <h2>Por que no construir toda la API en un solo archivo?</h2>
+            <div class="content-grid">
+              <section>
+                <h3>Cuando todo esta en <code>main.py</code></h3>
+                <ul>
+                  <li>Rutas.</li>
+                  <li>Modelos.</li>
+                  <li>Consumo de API externa.</li>
+                  <li>Conexion a base de datos.</li>
+                  <li>Variables de configuracion.</li>
+                  <li>Logica de negocio.</li>
+                </ul>
+              </section>
+              <section>
+                <h3>Que pasa despues</h3>
+                <p>
+                  El archivo crece, se vuelve confuso y cada cambio obliga a tocar el mismo lugar.
+                  Separar responsabilidades hace que el proyecto sea mas facil de explicar y mantener.
+                </p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Estructura">
+            <p class="eyebrow">20 · Estructura sugerida</p>
+            <h2>Carpetas con responsabilidades claras</h2>
+            <pre class="tree"><code>app/
+├── main.py
+├── routers/
+│   ├── items.py
+│   └── external.py
+├── schemas/
+│   └── item_schema.py
+├── services/
+│   └── external_service.py
+└── core/
+    └── config.py</code></pre>
+            <div class="folder-grid">
+              <span><code>main.py</code> entrada de la app</span>
+              <span><code>routers/</code> endpoints</span>
+              <span><code>schemas/</code> modelos Pydantic</span>
+              <span><code>services/</code> logica o consumo externo</span>
+              <span><code>core/</code> configuracion general</span>
+            </div>
+          </article>
+
+          <article class="slide" data-title="APIRouter">
+            <p class="eyebrow">21 · <code>APIRouter</code></p>
+            <h2>Un router es una forma de agrupar rutas por modulo</h2>
+            <div class="slide-grid two-columns">
+              <section>
+                <pre><code>router = APIRouter(
+    prefix="/items",
+    tags=["Items"]
+)</code></pre>
+                <p>
+                  Todas las rutas del archivo comienzan con <code>/items</code> y aparecen
+                  agrupadas bajo el tag <code>Items</code> en <code>/docs</code>.
+                </p>
+              </section>
+              <section class="doc-card">
+                <h3>Referencia oficial</h3>
+                <p>
+                  FastAPI presenta <code>APIRouter</code> como una forma de separar operaciones
+                  de path en varios archivos y luego incluirlas en la app principal.
+                </p>
+                <a href="https://fastapi.tiangolo.com/es/tutorial/bigger-applications/" target="_blank" rel="noreferrer">
+                  FastAPI · Aplicaciones mas grandes
+                </a>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Mini proyecto">
+            <p class="eyebrow">22 · Proyecto guiado</p>
+            <h2>API de Items Academicos</h2>
+            <div class="feature-list">
+              <div><strong>Crear</strong><span><code>POST /items/</code></span></div>
+              <div><strong>Listar</strong><span><code>GET /items/</code></span></div>
+              <div><strong>Consultar</strong><span><code>GET /items/{item_id}</code></span></div>
+              <div><strong>Actualizar</strong><span><code>PUT /items/{item_id}</code></span></div>
+              <div><strong>Eliminar</strong><span><code>DELETE /items/{item_id}</code></span></div>
+              <div><strong>Adaptar externo</strong><span><code>GET /external/pokemon/{pokemon_name}</code></span></div>
+            </div>
+            <p class="teacher-note">
+              Por ahora guardamos datos en memoria con una lista de diccionarios. Mas adelante,
+              esa responsabilidad se conectara a Supabase/PostgreSQL.
+            </p>
+          </article>
+
+          <article class="slide code-slide" data-title="Crear carpetas">
+            <p class="eyebrow">23 · Paso 1</p>
+            <h2>Crear estructura de carpetas</h2>
+            <div class="content-grid">
+              <section>
+                <h3>Terminal macOS/Linux</h3>
+                <pre><code>mkdir clase_2_fastapi
+cd clase_2_fastapi
+mkdir app app/routers app/schemas app/services app/core
+touch app/main.py
+touch app/routers/items.py
+touch app/routers/external.py
+touch app/schemas/item_schema.py
+touch app/services/external_service.py
+touch app/core/config.py</code></pre>
+              </section>
+              <section>
+                <h3>Windows PowerShell</h3>
+                <pre><code>New-Item app/main.py
+New-Item app/routers/items.py
+New-Item app/routers/external.py
+New-Item app/schemas/item_schema.py
+New-Item app/services/external_service.py
+New-Item app/core/config.py</code></pre>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Dependencias">
+            <p class="eyebrow">24 · Paso 2</p>
+            <h2>Crear entorno e instalar dependencias</h2>
+            <div class="content-grid">
+              <section>
+                <h3>Entorno virtual</h3>
+                <pre><code>python -m venv venv</code></pre>
+                <pre><code># Windows
+venv\Scripts\activate
+
+# macOS o Linux
+source venv/bin/activate</code></pre>
+              </section>
+              <section>
+                <h3>Paquetes</h3>
+                <pre><code>pip install fastapi uvicorn requests</code></pre>
+                <p>
+                  <code>fastapi</code> define la app, <code>uvicorn</code> la ejecuta,
+                  y <code>requests</code> consulta PokéAPI.
+                </p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide code-slide" data-title="Schemas">
+            <p class="eyebrow">25 · Paso 3</p>
+            <h2>Crear modelos Pydantic</h2>
+            <pre><code>from pydantic import BaseModel, Field
+
+
+class ItemCreate(BaseModel):
+    name: str = Field(min_length=3, max_length=80)
+    description: str | None = None
+    category: str = Field(min_length=3, max_length=50)
+    source: str | None = None
+
+
+class ItemUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=3, max_length=80)
+    description: str | None = None
+    category: str | None = Field(default=None, min_length=3, max_length=50)
+    source: str | None = None
+
+
+class ItemResponse(BaseModel):
+    id: int
+    name: str
+    description: str | None = None
+    category: str
+    source: str | None = None
+
+
+class ExternalItemResponse(BaseModel):
+    external_id: int
+    name: str
+    source: str</code></pre>
+            <p class="teacher-note">
+              No estamos creando tablas de base de datos. Estamos creando contratos de datos.
+            </p>
+          </article>
+
+          <article class="slide code-slide" data-title="Router items">
+            <p class="eyebrow">26 · Paso 4</p>
+            <h2>Crear router de items</h2>
+            <pre><code>from fastapi import APIRouter, HTTPException, status
+from app.schemas.item_schema import ItemCreate, ItemUpdate, ItemResponse
+
+router = APIRouter(
+    prefix="/items",
+    tags=["Items"]
+)
+
+items_db = []
+current_id = 1</code></pre>
+            <div class="explain-list">
+              <p><code>APIRouter</code> agrupa rutas.</p>
+              <p><code>items_db</code> simula una base de datos temporal.</p>
+              <p><code>current_id</code> genera identificadores simples mientras no usamos una base real.</p>
+            </div>
+          </article>
+
+          <article class="slide code-slide" data-title="GET items">
+            <p class="eyebrow">27 · Listar y consultar</p>
+            <h2>Endpoints <code>GET</code></h2>
+            <pre><code>@router.get("/", response_model=list[ItemResponse])
+def get_items():
+    return items_db
+
+
+@router.get("/{item_id}", response_model=ItemResponse)
+def get_item(item_id: int):
+    for item in items_db:
+        if item["id"] == item_id:
+            return item
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="El item solicitado no existe"
+    )</code></pre>
+            <p>
+              Si el usuario visita <code>/items/hola</code>, FastAPI intentara convertir
+              <code>item_id</code> a entero y devolvera error de validacion.
+            </p>
+          </article>
+
+          <article class="slide code-slide" data-title="POST items">
+            <p class="eyebrow">28 · Crear</p>
+            <h2>Endpoint <code>POST</code></h2>
+            <pre><code>@router.post("/", response_model=ItemResponse, status_code=status.HTTP_201_CREATED)
+def create_item(item: ItemCreate):
+    global current_id
+
+    new_item = {
+        "id": current_id,
+        "name": item.name,
+        "description": item.description,
+        "category": item.category,
+        "source": item.source
+    }
+
+    items_db.append(new_item)
+    current_id += 1
+
+    return new_item</code></pre>
+            <p>
+              El cuerpo entra como <code>ItemCreate</code>; la respuesta sale como
+              <code>ItemResponse</code> y se documenta como <code>201 Created</code>.
+            </p>
+          </article>
+
+          <article class="slide code-slide" data-title="PUT items">
+            <p class="eyebrow">29 · Actualizar</p>
+            <h2>Endpoint <code>PUT</code></h2>
+            <pre><code>@router.put("/{item_id}", response_model=ItemResponse)
+def update_item(item_id: int, item_data: ItemUpdate):
+    for item in items_db:
+        if item["id"] == item_id:
+            update_data = item_data.model_dump(exclude_unset=True)
+
+            for key, value in update_data.items():
+                item[key] = value
+
+            return item
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="No se puede actualizar porque el item no existe"
+    )</code></pre>
+          </article>
+
+          <article class="slide code-slide" data-title="DELETE items">
+            <p class="eyebrow">30 · Eliminar</p>
+            <h2>Endpoint <code>DELETE</code></h2>
+            <pre><code>@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_item(item_id: int):
+    for index, item in enumerate(items_db):
+        if item["id"] == item_id:
+            items_db.pop(index)
+            return
+
+    raise HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="No se puede eliminar porque el item no existe"
+    )</code></pre>
+            <p>
+              <code>204 No Content</code> comunica que la eliminacion fue exitosa y que no
+              habra cuerpo de respuesta.
+            </p>
+          </article>
+
+          <article class="slide code-slide" data-title="Servicio externo">
+            <p class="eyebrow">31 · Paso 5</p>
+            <h2>Servicio externo para PokéAPI</h2>
+            <pre><code>import requests
+from fastapi import HTTPException, status
+
+
+def get_pokemon_from_api(pokemon_name: str):
+    url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_name.lower()}"
+
+    response = requests.get(url)
+
+    if response.status_code == 404:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="El pokemon solicitado no existe en la API externa"
+        )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Error al consultar la API externa"
+        )
+
+    data = response.json()
+
+    return {
+        "external_id": data["id"],
+        "name": data["name"],
+        "source": "pokeapi"
+    }</code></pre>
+          </article>
+
+          <article class="slide" data-title="Servicio explicado">
+            <p class="eyebrow">32 · Separar router y servicio</p>
+            <h2>El servicio no define rutas: resuelve la logica externa</h2>
+            <div class="content-grid">
+              <section>
+                <h3>Responsabilidad del router</h3>
+                <p>Recibir solicitudes HTTP, validar parametros, declarar modelos de respuesta.</p>
+              </section>
+              <section>
+                <h3>Responsabilidad del servicio</h3>
+                <p>Consultar PokéAPI, interpretar errores externos y adaptar la respuesta.</p>
+              </section>
+            </div>
+            <p class="teacher-note">
+              No devolvemos la respuesta cruda de PokéAPI porque tiene demasiados campos.
+              La adaptamos al contrato <code>ExternalItemResponse</code>.
+            </p>
+          </article>
+
+          <article class="slide code-slide" data-title="Router externo">
+            <p class="eyebrow">33 · Paso 6</p>
+            <h2>Router externo</h2>
+            <pre><code>from fastapi import APIRouter
+from app.schemas.item_schema import ExternalItemResponse
+from app.services.external_service import get_pokemon_from_api
+
+router = APIRouter(
+    prefix="/external",
+    tags=["External API"]
+)
+
+
+@router.get("/pokemon/{pokemon_name}", response_model=ExternalItemResponse)
+def get_external_pokemon(pokemon_name: str):
+    return get_pokemon_from_api(pokemon_name)</code></pre>
+            <p>
+              La ruta completa sera <code>GET /external/pokemon/{pokemon_name}</code>.
+            </p>
+          </article>
+
+          <article class="slide code-slide" data-title="Config y main">
+            <p class="eyebrow">34 · Pasos 7 y 8</p>
+            <h2>Configuracion y archivo principal</h2>
+            <div class="content-grid">
+              <section>
+                <h3><code>app/core/config.py</code></h3>
+                <pre><code>APP_NAME = "API de Items Academicos"
+APP_VERSION = "1.0.0"</code></pre>
+              </section>
+              <section>
+                <h3><code>app/main.py</code></h3>
+                <pre><code>from fastapi import FastAPI
+from app.core.config import APP_NAME, APP_VERSION
+from app.routers import items, external
+
+app = FastAPI(
+    title=APP_NAME,
+    version=APP_VERSION,
+    description="API academica para practicar modelos, validaciones, routers y estructura profesional con FastAPI."
+)
+
+app.include_router(items.router)
+app.include_router(external.router)
+
+
+@app.get("/")
+def root():
+    return {
+        "message": "Bienvenido a la API de Items Academicos",
+        "docs": "/docs"
+    }</code></pre>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Ejecutar">
+            <p class="eyebrow">35 · Paso 9</p>
+            <h2>Ejecutar y revisar documentacion automatica</h2>
+            <div class="content-grid">
+              <section>
+                <h3>Comando</h3>
+                <pre><code>uvicorn app.main:app --reload</code></pre>
+                <p>
+                  <code>app.main:app</code> significa: carpeta <code>app</code>, archivo
+                  <code>main.py</code>, variable <code>app</code>.
+                </p>
+              </section>
+              <section>
+                <h3>URLs</h3>
+                <p><code>http://127.0.0.1:8000</code></p>
+                <p><code>http://127.0.0.1:8000/docs</code></p>
+                <p>
+                  En <code>/docs</code> deben verse endpoints, parametros, cuerpos JSON,
+                  modelos y codigos de estado.
+                </p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Endpoints">
+            <p class="eyebrow">36 · Resultado esperado</p>
+            <h2>Endpoints que deben aparecer en <code>/docs</code></h2>
+            <div class="endpoint-list">
+              <span><b>GET</b> /</span>
+              <span><b>GET</b> /items/</span>
+              <span><b>POST</b> /items/</span>
+              <span><b>GET</b> /items/{item_id}</span>
+              <span><b>PUT</b> /items/{item_id}</span>
+              <span><b>DELETE</b> /items/{item_id}</span>
+              <span><b>GET</b> /external/pokemon/{pokemon_name}</span>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Pruebas 1">
+            <p class="eyebrow">37 · Pruebas guiadas</p>
+            <h2>Crear, validar y listar</h2>
+            <div class="test-grid">
+              <section>
+                <h3>Crear item valido</h3>
+                <p><code>POST /items/</code> · <strong>201 Created</strong></p>
+                <pre><code>{
+  "name": "Pikachu",
+  "description": "Pokemon de tipo electrico",
+  "category": "pokemon",
+  "source": "manual"
+}</code></pre>
+              </section>
+              <section>
+                <h3>Crear item invalido</h3>
+                <p><code>POST /items/</code> · <strong>422</strong></p>
+                <pre><code>{
+  "name": "Pi",
+  "description": "Nombre demasiado corto",
+  "category": "pokemon"
+}</code></pre>
+              </section>
+              <section>
+                <h3>Listar items</h3>
+                <p><code>GET /items/</code> · <strong>200 OK</strong></p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Pruebas 2">
+            <p class="eyebrow">38 · Pruebas guiadas</p>
+            <h2>Consultar, actualizar, eliminar y consumir externo</h2>
+            <div class="test-grid compact">
+              <section><h3>Consultar existente</h3><p><code>GET /items/1</code> devuelve el item.</p></section>
+              <section><h3>Consultar inexistente</h3><p><code>GET /items/999</code> devuelve <strong>404</strong>.</p></section>
+              <section><h3>Actualizar</h3><p><code>PUT /items/1</code> con <code>{"name": "Pikachu actualizado"}</code>.</p></section>
+              <section><h3>PokéAPI</h3><p><code>GET /external/pokemon/pikachu</code> devuelve <code>external_id</code>, <code>name</code> y <code>source</code>.</p></section>
+              <section><h3>Externo inexistente</h3><p><code>GET /external/pokemon/noexiste123</code> devuelve <strong>404</strong>.</p></section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Mini explicaciones">
+            <p class="eyebrow">39 · Momentos de explicacion</p>
+            <h2>Tres ideas para reforzar durante la demo</h2>
+            <div class="content-grid three">
+              <section>
+                <h3>Validacion automatica</h3>
+                <p>
+                  Si <code>name</code> tiene dos caracteres, no escribimos el error manualmente:
+                  el modelo ya tenia la regla.
+                </p>
+              </section>
+              <section>
+                <h3>Documentacion automatica</h3>
+                <p>
+                  <code>/docs</code> nace del codigo: tipos, modelos, tags, parametros y codigos de estado.
+                </p>
+              </section>
+              <section>
+                <h3>Salida protegida</h3>
+                <p>
+                  <code>response_model</code> ayuda a no exponer datos que no pertenecen al contrato publico.
+                </p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Actividad">
+            <p class="eyebrow">40 · Actividad practica</p>
+            <h2>Reorganizar la API en carpetas</h2>
+            <div class="activity-panel">
+              <p>Deben crear los modelos:</p>
+              <div class="inline-code-list">
+                <code>ItemCreate</code>
+                <code>ItemUpdate</code>
+                <code>ItemResponse</code>
+                <code>ExternalItemResponse</code>
+              </div>
+              <p>Deben implementar los endpoints minimos:</p>
+              <div class="endpoint-list small">
+                <span><b>GET</b> /items/</span>
+                <span><b>POST</b> /items/</span>
+                <span><b>GET</b> /items/{item_id}</span>
+                <span><b>PUT</b> /items/{item_id}</span>
+                <span><b>DELETE</b> /items/{item_id}</span>
+                <span><b>GET</b> /external/pokemon/{pokemon_name}</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Preguntas">
+            <p class="eyebrow">41 · Preguntas durante la actividad</p>
+            <h2>Preguntas para comprobar comprension</h2>
+            <div class="question-list">
+              <p>Que archivo levanta la aplicacion?</p>
+              <p>Que archivo contiene las rutas de items?</p>
+              <p>Por que <code>ItemCreate</code> no tiene <code>id</code>?</p>
+              <p>Por que <code>ItemUpdate</code> tiene campos opcionales?</p>
+              <p>Que hace <code>response_model</code>?</p>
+              <p>Que diferencia hay entre un error <code>404</code> y un <code>422</code>?</p>
+              <p>Por que no devolvemos toda la respuesta original de PokéAPI?</p>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Errores comunes">
+            <p class="eyebrow">42 · Errores comunes</p>
+            <h2>Problemas esperados y como leerlos</h2>
+            <div class="error-grid">
+              <section>
+                <h3>Ruta no aparece</h3>
+                <p>Falta <code>app.include_router(items.router)</code>.</p>
+              </section>
+              <section>
+                <h3><code>ModuleNotFoundError: app</code></h3>
+                <p>Se ejecuto <code>uvicorn</code> desde una carpeta incorrecta.</p>
+              </section>
+              <section>
+                <h3>Modelo de respuesta equivocado</h3>
+                <p>Usar <code>ItemResponse</code>, no <code>ItemCreate</code>, al crear.</p>
+              </section>
+              <section>
+                <h3>PUT borra datos</h3>
+                <p>Falta <code>exclude_unset=True</code> en <code>model_dump()</code>.</p>
+              </section>
+              <section>
+                <h3>Error como texto</h3>
+                <p>Usar <code>raise HTTPException(...)</code>, no <code>return "No encontrado"</code>.</p>
+              </section>
+            </div>
+          </article>
+
+          <article class="slide" data-title="Cierre">
+            <p class="eyebrow">43 · Cierre conceptual</p>
+            <h2>La API ya tiene forma de backend real</h2>
+            <div class="closing-grid">
+              <div>Modelos</div>
+              <div>Validaciones</div>
+              <div>Codigos HTTP</div>
+              <div>Manejo de errores</div>
+              <div>Documentacion automatica</div>
+              <div>Separacion por carpetas</div>
+            </div>
+            <p class="lead">
+              Todavia no tenemos una base de datos real, pero ya preparamos el proyecto para conectarlo despues a Supabase.
+            </p>
+          </article>
+
+          <article class="slide references-slide" data-title="Referencias">
+            <p class="eyebrow">44 · Documentacion oficial</p>
+            <h2>Fuentes de FastAPI usadas para esta clase</h2>
+            <div class="reference-list">
+              <a href="https://fastapi.tiangolo.com/tutorial/body/" target="_blank" rel="noreferrer">
+                Request Body · modelos Pydantic con <code>BaseModel</code>
+              </a>
+              <a href="https://fastapi.tiangolo.com/tutorial/body-fields/" target="_blank" rel="noreferrer">
+                Body - Fields · validaciones con <code>Field</code>
+              </a>
+              <a href="https://fastapi.tiangolo.com/es/tutorial/response-model/" target="_blank" rel="noreferrer">
+                Modelo de Response · <code>response_model</code>
+              </a>
+              <a href="https://fastapi.tiangolo.com/es/tutorial/response-status-code/" target="_blank" rel="noreferrer">
+                Codigo de Estado del Response · <code>status_code</code>
+              </a>
+              <a href="https://fastapi.tiangolo.com/es/tutorial/handling-errors/" target="_blank" rel="noreferrer">
+                Manejo de Errores · <code>HTTPException</code>
+              </a>
+              <a href="https://fastapi.tiangolo.com/es/tutorial/bigger-applications/" target="_blank" rel="noreferrer">
+                Aplicaciones mas grandes · multiples archivos y <code>APIRouter</code>
+              </a>
+            </div>
+          </article>
+        </main>
+      </div>
+
+      <footer class="deck-controls">
+        <button class="nav-button" id="prevSlide" type="button" aria-label="Diapositiva anterior">
+          <span>‹</span>
+        </button>
+        <div class="slide-topic" id="slideTopic">Inicio</div>
+        <button class="nav-button" id="nextSlide" type="button" aria-label="Diapositiva siguiente">
+          <span>›</span>
+        </button>
+      </footer>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
