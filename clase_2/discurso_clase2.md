@@ -1,82 +1,61 @@
-# Modelos, Validaciones y Estructura Correcta
+# Modelos, Validaciones y Estructura Profesional en FastAPI
 
-## 1. Propósito de la clase
+## 1. Introducción al Desarrollo de APIs Profesionales
 
-En la clase anterior, los estudiantes pasaron de consumir una API externa
-directamente con `requests` a crear una API sencilla con FastAPI. Ahora el
-objetivo es dar el siguiente paso: dejar de escribir todo en un solo archivo y
-comenzar a construir una API más ordenada, validada y fácil de mantener.
+En la sesión anterior, aprendiste a consumir una API externa utilizando `requests` y a dar tus primeros pasos creando endpoints sencillos con FastAPI. Ahora es momento de avanzar hacia el siguiente nivel. 
 
-La idea central de esta clase es que los estudiantes entiendan que una API
-profesional no solo "responde datos", sino que también:
+En el desarrollo de software profesional, una API no se limita únicamente a "responder datos". Para construir aplicaciones robustas, escalables y seguras, una API debe:
 
-- Valida lo que recibe.
-- Controla lo que devuelve.
-- Maneja errores correctamente.
-- Organiza el código por responsabilidades.
-- Documenta automáticamente sus endpoints.
-- Separa rutas, esquemas, servicios y configuración.
+*   **Validar los datos de entrada:** Garantizar que la información recibida cumpla con formatos, tipos y longitudes esperados antes de procesarla.
+*   **Controlar la salida:** Asegurar que la API devuelva únicamente la información pertinente, protegiendo datos sensibles o innecesarios.
+*   **Gestionar errores de manera clara:** Responder con códigos HTTP adecuados y mensajes descriptivos cuando algo falle.
+*   **Organizar el código de forma modular:** Separar el proyecto por responsabilidades (rutas, esquemas, servicios, configuración) en lugar de escribir todo en un solo archivo.
+*   **Documentar de forma automática:** Facilitar que otros desarrolladores entiendan y prueben los endpoints sin esfuerzo.
 
-FastAPI permite declarar modelos de entrada y salida con Pydantic. Estos modelos
-ayudan a validar datos, generar documentación automática y controlar qué
-información se expone en las respuestas.
+FastAPI nos facilita enormemente estas tareas gracias a su integración nativa con **Pydantic** para la definición y validación de esquemas, y a herramientas como **APIRouter** para estructurar proyectos de gran escala.
 
-FastAPI también permite declarar códigos de estado directamente en los
-decoradores de las rutas usando `status_code`, y recomienda organizar
-aplicaciones grandes en múltiples archivos usando `APIRouter`.
+---
 
-## 2. Objetivo de aprendizaje
+## 2. ¿Qué aprenderás en esta guía?
 
-Al finalizar la clase, el estudiante debe ser capaz de:
+Al finalizar el estudio y la práctica de esta guía, serás capaz de:
 
-- Crear modelos Pydantic usando `BaseModel`.
-- Validar datos de entrada usando tipos y `Field`.
-- Diferenciar modelos de creación, actualización y respuesta.
-- Usar `response_model` para controlar la salida de un endpoint.
-- Definir códigos de estado HTTP en las rutas.
-- Lanzar errores con `HTTPException`.
-- Separar una API en carpetas.
-- Usar `APIRouter` para dividir rutas por módulos.
-- Explicar por qué no se debe construir toda la API en un solo archivo.
+*   Crear modelos de datos con Pydantic utilizando `BaseModel`.
+*   Implementar validaciones avanzadas de datos con tipos de Python y la clase `Field`.
+*   Explicar la diferencia entre modelos de creación (`Create`), actualización (`Update`) y respuesta (`Response`), y por qué no debes reutilizar un único modelo para todo.
+*   Utilizar `response_model` para controlar y filtrar la salida de tus endpoints.
+*   Definir códigos de estado HTTP semánticos y adecuados en cada ruta.
+*   Lanzar excepciones controladas utilizando `HTTPException`.
+*   Estructurar un proyecto de FastAPI en directorios modulares.
+*   Utilizar `APIRouter` para dividir y organizar tus rutas por componentes.
 
-## 3. Pregunta inicial para abrir la clase
+---
 
-Puedes iniciar con esta pregunta:
+## 3. Reflexión Inicial
 
-> Si una API recibe cualquier dato sin validarlo, ¿qué problemas podrían
-> aparecer?
+Antes de entrar en el código, detente un momento a pensar en lo siguiente:
 
-Posibles respuestas esperadas:
+> *Si una API acepta cualquier dato que le envíe el cliente sin realizar ninguna validación, ¿qué problemas podrían surgir en el sistema?*
 
-- Datos incompletos.
-- Campos con tipos incorrectos.
-- Nombres vacíos o demasiado cortos.
-- Errores difíciles de detectar.
-- Respuestas inconsistentes.
-- Exposición de datos que no deberían mostrarse.
-- Código difícil de mantener.
+Si lo analizas, la falta de validación de datos provoca:
+*   Registros con información incompleta o inconsistente en la base de datos.
+*   Campos con tipos de datos incorrectos (por ejemplo, texto donde debería ir un número), lo que genera fallos inesperados en el backend.
+*   Vulnerabilidades de seguridad y fallos lógicos difíciles de depurar.
+*   Exposición involuntaria de datos internos del sistema.
 
-Luego conectas con la idea principal:
+En esta guía aprenderás a definir reglas claras para tu API: qué datos acepta, qué datos responde y cómo estructurar el código para evitar el desorden a medida que la aplicación crece.
 
-> Hoy vamos a aprender a ponerle reglas a nuestra API. Vamos a decirle qué datos
-> acepta, qué datos responde y cómo debe organizarse el proyecto para que no se
-> vuelva un desorden.
+---
 
-## 4. Concepto 1: ¿Qué es Pydantic?
+## 4. Concepto 1: ¿Qué es Pydantic y cómo funciona?
 
-Pydantic es una librería usada por FastAPI para definir modelos de datos. Un
-modelo representa la estructura que deben tener los datos que entran o salen de
-la API.
+**Pydantic** es una biblioteca de Python utilizada por FastAPI para definir la estructura y realizar la validación de los datos que entran o salen de la API. 
 
-En palabras simples:
+En palabras sencillas: **Pydantic te permite definir contratos de datos.** Le indica a Python: *"este objeto debe tener exactamente estos campos, con estos tipos de datos y estas reglas específicas"*.
 
-> Pydantic nos permite decirle a Python: "este dato debe tener esta forma".
+Si un cliente envía una petición que no cumple con estas reglas, FastAPI y Pydantic interceptan la solicitud y devuelven automáticamente un error detallado, impidiendo que el código del endpoint se ejecute con datos corruptos.
 
-Por ejemplo, si una API recibe un producto, no queremos aceptar cualquier cosa.
-Queremos que el producto tenga un nombre, una categoría, una descripción
-opcional y, tal vez, una fuente externa.
-
-### Ejemplo base
+### Ejemplo base de un esquema
 
 ```python
 from pydantic import BaseModel, Field
@@ -89,74 +68,24 @@ class ItemCreate(BaseModel):
     source: str | None = None
 ```
 
-### Explicación línea por línea
+### Explicación detallada del esquema:
 
-```python
-from pydantic import BaseModel, Field
-```
+*   `from pydantic import BaseModel, Field`: Importamos `BaseModel` (la clase base para construir cualquier modelo en Pydantic) y `Field` (una herramienta para aplicar reglas de validación adicionales y agregar metadatos a los campos).
+*   `class ItemCreate(BaseModel):`: Definimos un modelo llamado `ItemCreate`. Este modelo representará la estructura exacta que esperamos recibir cuando el cliente envíe una petición para registrar o crear un nuevo ítem.
+*   `name: str = Field(min_length=3, max_length=80)`: Definimos que el campo `name` es de tipo texto (`str`), obligatorio, y debe tener una longitud mínima de 3 caracteres y máxima de 80.
+*   `description: str | None = None`: El campo `description` acepta valores de tipo texto o nulo (`None`). Al asignarle `= None` al final, le indicamos a la API que este campo es opcional.
+*   `category: str`: El campo `category` es de tipo texto y es obligatorio (ya que no tiene un valor por defecto asignado).
+*   `source: str | None = None`: El campo `source` es opcional. Nos servirá en la práctica para identificar la fuente del ítem (por ejemplo, `"local"` o `"pokeapi"`).
 
-Importamos `BaseModel` y `Field`.
+Cuando intentamos inicializar un modelo de Pydantic con datos incorrectos, la biblioteca realiza un análisis (*parsing*) de tipos y lanza un error si la validación falla.
 
-- `BaseModel` permite crear modelos de datos.
-- `Field` permite agregar reglas adicionales de validación, como longitud mínima
-  o máxima.
-
-```python
-class ItemCreate(BaseModel):
-```
-
-Creamos una clase llamada `ItemCreate`.
-
-Esta clase representa los datos que el cliente debe enviar cuando quiere crear
-un nuevo item.
-
-```python
-name: str = Field(min_length=3, max_length=80)
-```
-
-El campo `name` debe ser texto.
-
-Además, debe tener mínimo 3 caracteres y máximo 80 caracteres.
-
-```python
-description: str | None = None
-```
-
-El campo `description` puede ser texto o puede no enviarse.
-
-La expresión `str | None` significa: "puede ser string o puede ser nulo".
-
-El `= None` significa que el campo es opcional.
-
-```python
-category: str
-```
-
-El campo `category` es obligatorio y debe ser texto.
-
-```python
-source: str | None = None
-```
-
-El campo `source` es opcional. Puede servir para indicar de dónde viene el item,
-por ejemplo `"local"` o `"pokeapi"`.
-
-Pydantic valida los datos cuando se crea una instancia del modelo. Si los datos
-no cumplen las reglas, se genera un error de validación.
-
-La documentación oficial de Pydantic describe que los modelos permiten definir
-campos con tipos y que la inicialización del modelo realiza parsing y
-validación.
+---
 
 ## 5. Concepto 2: ¿Por qué no usar el mismo modelo para todo?
 
-Este punto es clave para la clase.
+Un error muy común al iniciar en FastAPI es intentar usar un único modelo Pydantic para todas las operaciones (creación, edición y respuesta). Aunque parezca que ahorra código al principio, es una mala práctica de diseño.
 
-Muchos estudiantes intentan crear un único modelo y usarlo para crear,
-actualizar y responder datos. Eso funciona al principio, pero es una mala
-práctica.
-
-### Ejemplo incorrecto
+### Ejemplo de diseño incorrecto (modelo único):
 
 ```python
 class Item(BaseModel):
@@ -167,24 +96,21 @@ class Item(BaseModel):
     source: str | None = None
 ```
 
-### Problema
+### ¿Por qué esto es un problema?
 
-Cuando el cliente crea un item, no debería enviar el `id`, porque el `id`
-normalmente lo genera la base de datos o la lógica interna.
+1.  **En la Creación (POST):** El cliente no debería enviar el `id` al crear un elemento, ya que el `id` generalmente es generado de forma automática por la base de datos o por la lógica interna del servidor. Si usamos el modelo anterior, obligaríamos al cliente a mandar un `id` inventado o tendríamos que hacerlo opcional, lo cual debilita el contrato.
+2.  **En la Actualización (PUT/PATCH):** Si un usuario quiere editar únicamente el nombre de un elemento, no debería estar obligado a enviar de nuevo la descripción o la categoría. En una actualización, la mayoría de los campos deberían ser opcionales.
+3.  **En la Respuesta (Response):** Al responder, sí necesitamos incluir el `id` del recurso generado. Además, es posible que queramos ocultar ciertos campos internos de la base de datos (como contraseñas, hashes o fechas de creación del sistema) que el usuario final no tiene por qué ver.
 
-Pero cuando la API responde, sí debería devolver el `id`.
+Por estas razones, la mejor práctica es **separar los modelos según su contexto de uso**.
 
-Por eso conviene separar modelos.
+---
 
-## 6. Modelos sugeridos para la clase
+## 6. Estructura de Modelos Recomendada
 
-Archivo:
+Siguiendo las mejores prácticas, definiremos nuestros esquemas en un archivo dedicado:
 
-```text
-app/schemas/item_schema.py
-```
-
-Código:
+**Ruta sugerida:** `app/schemas/item_schema.py`
 
 ```python
 from pydantic import BaseModel, Field
@@ -218,96 +144,20 @@ class ExternalItemResponse(BaseModel):
     source: str
 ```
 
-### Explicación de cada modelo
+### Análisis de cada modelo:
 
-#### `ItemCreate`
+*   `ItemCreate`: Controla estrictamente los datos mínimos que se requieren para insertar un elemento. No expone el `id` porque no es responsabilidad del cliente generarlo.
+*   `ItemUpdate`: Todos sus campos son opcionales (`str | None = Field(default=None, ...)`). Esto permite realizar actualizaciones parciales de manera segura. Si el cliente solo envía `{ "name": "Nuevo Nombre" }`, el backend actualizará únicamente ese campo sin alterar ni sobreescribir los demás con valores nulos.
+*   `ItemResponse`: Define el formato exacto de salida de la API. Este modelo garantiza que la API siempre devolverá el `id` generado junto con el resto de la información del elemento.
+*   `ExternalItemResponse`: Se utiliza para estructurar las respuestas provenientes de servicios o APIs externas. Por ejemplo, al consumir datos de la *PokéAPI*, esta devuelve cientos de campos innecesarios. Con este modelo, filtramos la información para entregarle al usuario únicamente el `external_id`, el `name` y el origen `source`.
 
-Se usa cuando el cliente quiere crear un nuevo item.
+---
 
-```python
-class ItemCreate(BaseModel):
-    name: str = Field(min_length=3, max_length=80)
-    description: str | None = None
-    category: str = Field(min_length=3, max_length=50)
-    source: str | None = None
-```
+## 7. Concepto 3: Controlando la Salida con `response_model`
 
-Este modelo controla qué datos puede enviar el cliente en un `POST`.
+FastAPI incluye un parámetro en sus decoradores de ruta llamado `response_model`. Su función principal es indicarle al framework qué modelo de Pydantic debe utilizar para serializar y filtrar la respuesta que se envía al cliente.
 
-No tiene `id`, porque el cliente no debe decidir el identificador.
-
-#### `ItemUpdate`
-
-Se usa cuando el cliente quiere actualizar un item existente.
-
-```python
-class ItemUpdate(BaseModel):
-    name: str | None = Field(default=None, min_length=3, max_length=80)
-    description: str | None = None
-    category: str | None = Field(default=None, min_length=3, max_length=50)
-    source: str | None = None
-```
-
-Aquí todos los campos son opcionales porque el usuario puede querer actualizar
-solo una parte del item.
-
-Ejemplo de actualización válida:
-
-```json
-{
-  "name": "Nuevo nombre"
-}
-```
-
-No tiene sentido obligar al cliente a reenviar todos los campos si solo quiere
-cambiar uno.
-
-#### `ItemResponse`
-
-Se usa para definir la respuesta de la API.
-
-```python
-class ItemResponse(BaseModel):
-    id: int
-    name: str
-    description: str | None = None
-    category: str
-    source: str | None = None
-```
-
-Este modelo sí incluye `id`, porque cuando la API responde, el cliente necesita
-saber qué recurso fue creado o consultado.
-
-#### `ExternalItemResponse`
-
-Se usa para representar datos que vienen de una API externa.
-
-```python
-class ExternalItemResponse(BaseModel):
-    external_id: int
-    name: str
-    source: str
-```
-
-Este modelo es útil para no devolver toda la respuesta cruda de la API externa.
-
-Por ejemplo, si consumimos PokéAPI, la respuesta original tiene muchísimos
-datos. Pero tal vez para esta clase solo necesitamos devolver:
-
-```json
-{
-  "external_id": 25,
-  "name": "pikachu",
-  "source": "pokeapi"
-}
-```
-
-## 7. Concepto 3: `response_model`
-
-`response_model` sirve para decirle a FastAPI cuál será la forma de la
-respuesta.
-
-### Ejemplo
+### Ejemplo de uso:
 
 ```python
 @router.post("/items", response_model=ItemResponse, status_code=201)
@@ -315,49 +165,29 @@ def create_item(item: ItemCreate):
     ...
 ```
 
-Esto significa:
+Al declarar esto, FastAPI se encarga automáticamente de:
+1.  **Validar la salida:** Asegurar que los datos que tu función retorna cumplan con la estructura de `ItemResponse`.
+2.  **Filtrar los datos:** Si tu función retorna campos adicionales que no pertenecen a `ItemResponse`, FastAPI los omitirá y no los enviará en el JSON de respuesta.
+3.  **Documentar el endpoint:** En la interfaz interactiva de Swagger (`/docs`), se mostrará claramente a los consumidores de tu API la estructura exacta del JSON que recibirán de vuelta.
 
-- El cliente envía datos con forma de `ItemCreate`.
-- La API responde datos con forma de `ItemResponse`.
-- Si todo sale bien, el código HTTP será `201 Created`.
+---
 
-FastAPI usa modelos de respuesta para validar, documentar, convertir y filtrar
-los datos de salida. Esto es importante porque ayuda a evitar que la API
-devuelva información innecesaria o sensible.
+## 8. Concepto 4: Códigos de Estado HTTP
 
-La documentación oficial también muestra que `status_code` puede declararse
-directamente en operaciones como `@app.post()`, `@app.get()`, `@app.put()` y
-`@app.delete()`.
+Los códigos de estado HTTP son la forma estándar en que un servidor web le comunica al cliente el resultado de su solicitud. Es crucial utilizarlos correctamente para que las aplicaciones cliente (web, móviles u otras APIs) puedan tomar decisiones en consecuencia.
 
-## 8. Concepto 4: códigos de estado HTTP
+### Tabla de códigos de estado esenciales:
 
-Explicación sencilla para estudiantes:
+| Código | Nombre | Cuándo se debe utilizar |
+| :---: | :--- | :--- |
+| **`200`** | `OK` | La solicitud fue exitosa (se usa comúnmente para consultas `GET` y actualizaciones `PUT`). |
+| **`201`** | `Created` | La solicitud fue exitosa y se ha creado un nuevo recurso en el servidor (`POST`). |
+| **`204`** | `No Content` | La acción se completó con éxito, pero la respuesta no contiene cuerpo (común en eliminaciones `DELETE`). |
+| **`400`** | `Bad Request` | La solicitud del cliente es incorrecta o contiene errores lógicos que impiden procesarla. |
+| **`404`** | `Not Found` | El recurso solicitado no se encuentra en el servidor. |
+| **`422`** | `Unprocessable Entity` | Los datos enviados no pasaron las reglas de validación (por ejemplo, Pydantic detectó un tipo incorrecto o faltan campos obligatorios). |
 
-> Un código de estado HTTP es la forma en que la API le dice al cliente qué pasó
-> con la solicitud.
-
-### Tabla básica para esta clase
-
-| Código | Significado          | Cuándo usarlo                                    |
-| -----: | -------------------- | ------------------------------------------------ |
-|  `200` | OK                   | Cuando una consulta o actualización fue exitosa. |
-|  `201` | Created              | Cuando se creó un recurso.                       |
-|  `204` | No Content           | Cuando se eliminó algo y no se devuelve cuerpo.  |
-|  `400` | Bad Request          | Cuando la solicitud tiene un problema lógico.    |
-|  `404` | Not Found            | Cuando el recurso no existe.                     |
-|  `422` | Unprocessable Entity | Cuando falla una validación de Pydantic.         |
-
-### Ejemplo
-
-```python
-@router.post("/", response_model=ItemResponse, status_code=201)
-def create_item(item: ItemCreate):
-    ...
-```
-
-Aquí se usa `201` porque se está creando un recurso.
-
-También se puede usar el módulo `status` para que el código sea más legible:
+En FastAPI, puedes definir el código de éxito por defecto directamente en el decorador:
 
 ```python
 from fastapi import status
@@ -368,42 +198,33 @@ def create_item(item: ItemCreate):
     ...
 ```
 
-Esta forma es más clara porque evita números "mágicos".
+> **Buenas prácticas:** Utiliza siempre el módulo `status` de `fastapi`. De este modo, evitas usar "números mágicos" y tu código se vuelve mucho más legible y autoexplicativo (es mejor leer `status.HTTP_201_CREATED` que simplemente escribir `201`).
 
-## 9. Concepto 5: manejo de errores con `HTTPException`
+---
 
-Cuando algo sale mal, no deberíamos devolver errores improvisados.
+## 9. Concepto 5: Manejo de Errores con `HTTPException`
 
-### Incorrecto
+Cuando algo falla en tu aplicación (por ejemplo, buscas un usuario por su ID y no existe), nunca debes retornar diccionarios con mensajes de error genéricos acompañados de un código de estado de éxito.
 
+### Enfoque Incorrecto (Mala práctica):
 ```python
+# Retorna un código HTTP 200 (éxito) pero el cuerpo dice que es un error.
+# Esto confunde a los clientes de tu API.
 return {"error": "No encontrado"}
 ```
 
-### Mejor
-
+### Enfoque Correcto:
 ```python
-from fastapi import HTTPException
-
+from fastapi import HTTPException, status
 
 if not item:
     raise HTTPException(
-        status_code=404,
+        status_code=status.HTTP_404_NOT_FOUND,
         detail="El recurso solicitado no existe"
     )
 ```
 
-### Explicación
-
-`HTTPException` interrumpe la ejecución de la función y devuelve una respuesta
-HTTP con el código indicado.
-
-En este caso:
-
-- `status_code=404` indica que el recurso no existe.
-- `detail` contiene el mensaje de error.
-
-Ejemplo de respuesta:
+Al utilizar `raise HTTPException(...)`, FastAPI interrumpe inmediatamente el flujo normal de la función y genera una respuesta HTTP formal con el código de error especificado y una estructura estandarizada en el JSON de respuesta:
 
 ```json
 {
@@ -411,37 +232,25 @@ Ejemplo de respuesta:
 }
 ```
 
-Esto es más profesional porque el cliente puede interpretar correctamente el
-error.
+---
 
-## 10. Concepto 6: separación de archivos
+## 10. Concepto 6: Modularidad y Separación de Archivos
 
-Cuando una API está en un solo archivo, puede funcionar para ejercicios
-pequeños, pero se vuelve difícil de mantener.
+Cuando creas tus primeras APIs, es común escribir todo el código en un único archivo `main.py`. Sin embargo, a medida que agregas endpoints, modelos y lógica de negocio, ese archivo único se vuelve gigantesco, difícil de leer y propenso a conflictos de código.
 
-### Ejemplo de mala organización
+La solución profesional consiste en aplicar el principio de **Separación de Responsabilidades**, dividiendo el código en carpetas y archivos especializados de acuerdo con su función:
 
-```text
-main.py
-```
+*   **Punto de entrada (`main.py`):** Inicializa la aplicación y registra los componentes globales. No debe contener lógica de endpoints.
+*   **Enrutadores (`routers/`):** Definen únicamente las rutas (endpoints) de la aplicación, los parámetros requeridos y los códigos de respuesta.
+*   **Esquemas (`schemas/`):** Contienen los modelos de Pydantic que validan las entradas y salidas de datos.
+*   **Servicios (`services/`):** Alojan la lógica de negocio pesada, la comunicación con bases de datos o el consumo de APIs de terceros.
+*   **Configuración (`core/`):** Define variables de entorno, credenciales y configuraciones generales del proyecto.
 
-Todo está allí:
+---
 
-- Rutas.
-- Modelos.
-- Consumo de API externa.
-- Conexión a base de datos.
-- Variables de configuración.
-- Lógica de negocio.
+## 11. Estructura del Proyecto
 
-### Problema
-
-Cuando el proyecto crece, el archivo se vuelve largo, confuso y difícil de
-explicar.
-
-La solución es separar responsabilidades.
-
-## 11. Estructura sugerida del proyecto
+Para la aplicación que desarrollaremos en esta sesión, implementaremos la siguiente estructura jerárquica de archivos:
 
 ```text
 app/
@@ -457,42 +266,28 @@ app/
     └── config.py
 ```
 
-### Explicación de carpetas
+Esta estructura mantiene el código limpio, modular y listo para crecer cuando necesitemos integrar bases de datos reales como PostgreSQL o Supabase.
 
-| Carpeta o archivo | Responsabilidad                               |
-| ----------------- | --------------------------------------------- |
-| `main.py`         | Punto de entrada de la aplicación.            |
-| `routers/`        | Define endpoints.                             |
-| `schemas/`        | Define modelos Pydantic.                      |
-| `services/`       | Contiene lógica de negocio o consumo externo. |
-| `core/`           | Configuración general del proyecto.           |
+---
 
-FastAPI recomienda separar aplicaciones grandes en múltiples archivos y usar
-`APIRouter` para organizar rutas de forma modular.
+## 12. Proyecto Práctico: API de Ítems Académicos
 
-## 12. Proyecto guiado de la clase
+A continuación, construirás de forma guiada una API estructurada profesionalmente. Esta API permitirá:
 
-### Nombre del mini proyecto
+1.  Crear ítems académicos (almacenados en una lista temporal en memoria).
+2.  Listar todos los ítems registrados.
+3.  Consultar un ítem específico por su ID.
+4.  Actualizar la información de un ítem existente.
+5.  Eliminar un ítem del sistema.
+6.  Consultar un Pokémon de forma externa en la *PokéAPI*, adaptando el resultado a nuestro modelo limpio.
 
-**API de Items Académicos**
+Sigue paso a paso las instrucciones detalladas a continuación para armar tu proyecto.
 
-La API permitirá:
+---
 
-- Crear items.
-- Listar items.
-- Consultar un item por ID.
-- Actualizar un item.
-- Eliminar un item.
-- Consultar un item externo desde PokéAPI y adaptarlo a nuestro modelo.
+## 13. Paso 1: Creación de la Estructura de Directorios
 
-Por ahora, para esta clase, los datos se guardarán en memoria usando una lista
-de diccionarios.
-
-Más adelante se conectará a Supabase.
-
-## 13. Paso 1: crear estructura de carpetas
-
-Desde la terminal:
+Abre tu terminal y ubícate en tu espacio de trabajo. Ejecuta los siguientes comandos para crear la estructura de carpetas:
 
 ```bash
 mkdir clase_2_fastapi
@@ -504,7 +299,7 @@ mkdir app/services
 mkdir app/core
 ```
 
-Crear archivos:
+Una vez creadas las carpetas, genera los archivos correspondientes:
 
 ```bash
 touch app/main.py
@@ -515,57 +310,40 @@ touch app/services/external_service.py
 touch app/core/config.py
 ```
 
-En Windows PowerShell, si `touch` no funciona, pueden crear los archivos
-manualmente o usar:
+*(Si estás en Windows PowerShell y el comando `touch` no está disponible, puedes utilizar `New-Item app/main.py` para cada archivo o crearlos manualmente desde tu editor de código).*
 
-```powershell
-New-Item app/main.py
-New-Item app/routers/items.py
-New-Item app/routers/external.py
-New-Item app/schemas/item_schema.py
-New-Item app/services/external_service.py
-New-Item app/core/config.py
-```
+---
 
-## 14. Paso 2: instalar dependencias
+## 14. Paso 2: Configuración del Entorno Virtual e Instalación
 
-Crear entorno virtual:
+Para mantener aisladas las dependencias del proyecto, crea y activa un entorno virtual en la raíz de `clase_2_fastapi`:
 
+### En macOS y Linux:
 ```bash
 python -m venv venv
-```
-
-Activar entorno virtual.
-
-En Windows:
-
-```powershell
-venv\Scripts\activate
-```
-
-En macOS o Linux:
-
-```bash
 source venv/bin/activate
 ```
 
-Instalar FastAPI, Uvicorn y Requests:
+### En Windows (PowerShell):
+```powershell
+python -m venv venv
+venv\Scripts\activate
+```
+
+Una vez activado el entorno virtual, instala FastAPI, Uvicorn (para ejecutar el servidor local) y Requests (para realizar la consulta externa):
 
 ```bash
 pip install fastapi uvicorn requests
 ```
 
-## 15. Paso 3: crear modelos Pydantic
+---
 
-Archivo:
+## 15. Paso 3: Implementación de Modelos Pydantic
 
-```text
-app/schemas/item_schema.py
-```
-
-Código:
+Abre el archivo `app/schemas/item_schema.py` y escribe la estructura de modelos que estudiamos anteriormente. Estos modelos servirán como contrato de datos para el resto de la aplicación:
 
 ```python
+# app/schemas/item_schema.py
 from pydantic import BaseModel, Field
 
 
@@ -597,30 +375,14 @@ class ExternalItemResponse(BaseModel):
     source: str
 ```
 
-### Explicación docente
+---
 
-Aquí no estamos creando tablas de base de datos. Estamos creando contratos de
-datos.
+## 16. Paso 4: Creación del Enrutador de Ítems (`APIRouter`)
 
-Un contrato de datos responde preguntas como:
-
-- ¿Qué campos puede enviar el cliente?
-- ¿Qué campos son obligatorios?
-- ¿Qué campos son opcionales?
-- ¿Qué tipo debe tener cada campo?
-- ¿Qué estructura tendrá la respuesta?
-
-## 16. Paso 4: crear router de items
-
-Archivo:
-
-```text
-app/routers/items.py
-```
-
-Código:
+Escribe la lógica del CRUD de ítems en `app/routers/items.py`. Aquí utilizaremos `APIRouter` y una lista en memoria (`items_db`) que actuará como base de datos temporal:
 
 ```python
+# app/routers/items.py
 from fastapi import APIRouter, HTTPException, status
 from app.schemas.item_schema import ItemCreate, ItemUpdate, ItemResponse
 
@@ -629,17 +391,20 @@ router = APIRouter(
     tags=["Items"]
 )
 
+# Base de datos temporal en memoria
 items_db = []
 current_id = 1
 
 
 @router.get("/", response_model=list[ItemResponse])
 def get_items():
+    """Retorna la lista de todos los ítems registrados."""
     return items_db
 
 
 @router.get("/{item_id}", response_model=ItemResponse)
 def get_item(item_id: int):
+    """Busca y retorna un ítem específico por su ID."""
     for item in items_db:
         if item["id"] == item_id:
             return item
@@ -652,6 +417,7 @@ def get_item(item_id: int):
 
 @router.post("/", response_model=ItemResponse, status_code=status.HTTP_201_CREATED)
 def create_item(item: ItemCreate):
+    """Crea un nuevo ítem y lo almacena en la base de datos temporal."""
     global current_id
 
     new_item = {
@@ -670,8 +436,10 @@ def create_item(item: ItemCreate):
 
 @router.put("/{item_id}", response_model=ItemResponse)
 def update_item(item_id: int, item_data: ItemUpdate):
+    """Actualiza parcialmente un ítem existente."""
     for item in items_db:
         if item["id"] == item_id:
+            # Convertimos el esquema a diccionario ignorando los campos no enviados
             update_data = item_data.model_dump(exclude_unset=True)
 
             for key, value in update_data.items():
@@ -687,6 +455,7 @@ def update_item(item_id: int, item_data: ItemUpdate):
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_item(item_id: int):
+    """Elimina un ítem específico por su ID."""
     for index, item in enumerate(items_db):
         if item["id"] == item_id:
             items_db.pop(index)
@@ -698,272 +467,60 @@ def delete_item(item_id: int):
     )
 ```
 
-## 17. Explicación del router de items
+---
 
-### Importaciones
+## 17. Desglose del Enrutador de Ítems
 
-```python
-from fastapi import APIRouter, HTTPException, status
-```
+Revisemos las partes clave que acabas de escribir en el archivo anterior:
 
-Importamos:
+*   **`prefix="/items"`:** Al configurar esto en `APIRouter`, le indicamos a FastAPI que todas las rutas declaradas en este archivo comenzarán automáticamente con la ruta `/items`. Por lo tanto, un endpoint definido como `@router.get("/")` estará expuesto en `/items/` de cara al cliente.
+*   **`tags=["Items"]`:** Permite etiquetar las rutas. En la interfaz gráfica de Swagger UI (`/docs`), todos estos endpoints aparecerán prolijamente agrupados bajo la sección "Items".
+*   **`exclude_unset=True` en `model_dump()`:** Esto es fundamental en el método `update_item`. Convierte el modelo Pydantic `ItemUpdate` en un diccionario común de Python, pero **omitiendo los campos que el cliente no envió en su petición**. De esta forma, si el cliente solo envía el campo `name`, el diccionario resultante será `{"name": "Nuevo Nombre"}` y no alterará los campos `description` o `category` existentes.
+*   **Uso de `global current_id`:** Dado que estamos usando una lista simple en memoria, utilizamos una variable global de Python para llevar el conteo incremental y único de los identificadores (`id`) de cada elemento creado.
 
-- `APIRouter`: permite agrupar rutas.
-- `HTTPException`: permite lanzar errores HTTP.
-- `status`: permite usar constantes como `HTTP_404_NOT_FOUND`.
+---
 
-```python
-from app.schemas.item_schema import ItemCreate, ItemUpdate, ItemResponse
-```
+## 18. Paso 5: Consumo de APIs Externas (Servicios)
 
-Importamos los modelos Pydantic que creamos.
+De acuerdo con el principio de separación de responsabilidades, la lógica necesaria para consultar a la *PokéAPI* externa no debe estar directamente en el archivo de rutas (router). En su lugar, la colocaremos dentro de un módulo de servicios.
 
-### Creación del router
+Abre el archivo `app/services/external_service.py` e implementa la función de consulta externa:
 
 ```python
-router = APIRouter(
-    prefix="/items",
-    tags=["Items"]
-)
-```
-
-Esto significa que todas las rutas de este archivo comenzarán con `/items`.
-
-Además, en la documentación `/docs`, aparecerán agrupadas bajo la etiqueta
-`Items`.
-
-Por ejemplo:
-
-```python
-@router.get("/")
-```
-
-Realmente será:
-
-```http
-GET /items/
-```
-
-### Base de datos temporal
-
-```python
-items_db = []
-current_id = 1
-```
-
-Por ahora usamos una lista para simular una base de datos.
-
-> Aclaración importante para los estudiantes: esta lista no es una base de datos
-> real. Si detenemos el servidor, se pierde la información. Más adelante
-> conectaremos Supabase/PostgreSQL.
-
-### Endpoint `GET`: listar items
-
-```python
-@router.get("/", response_model=list[ItemResponse])
-def get_items():
-    return items_db
-```
-
-Este endpoint devuelve todos los items.
-
-`response_model=list[ItemResponse]` indica que la respuesta será una lista de
-objetos con forma de `ItemResponse`.
-
-### Endpoint `GET` por ID
-
-```python
-@router.get("/{item_id}", response_model=ItemResponse)
-def get_item(item_id: int):
-```
-
-Aquí `item_id` es un parámetro de ruta.
-
-Ejemplo:
-
-```http
-GET /items/1
-```
-
-FastAPI convierte automáticamente el valor de la URL a entero porque declaramos:
-
-```python
-item_id: int
-```
-
-Si el usuario envía:
-
-```http
-/items/hola
-```
-
-FastAPI devolverá un error de validación porque esperaba un número entero.
-
-### Búsqueda del item
-
-```python
-for item in items_db:
-    if item["id"] == item_id:
-        return item
-```
-
-Se recorre la lista y se busca el item cuyo `id` coincida.
-
-### Error `404`
-
-```python
-raise HTTPException(
-    status_code=status.HTTP_404_NOT_FOUND,
-    detail="El item solicitado no existe"
-)
-```
-
-Si no se encuentra el item, se lanza un error `404`.
-
-Esto es mejor que devolver `None`, porque el cliente entiende que el recurso no
-fue encontrado.
-
-### Endpoint `POST`
-
-```python
-@router.post("/", response_model=ItemResponse, status_code=status.HTTP_201_CREATED)
-def create_item(item: ItemCreate):
-```
-
-Este endpoint recibe un `ItemCreate`.
-
-Eso significa que el cuerpo de la petición debe cumplir las reglas del modelo.
-
-Ejemplo válido:
-
-```json
-{
-  "name": "Pikachu",
-  "description": "Pokemon de tipo eléctrico",
-  "category": "pokemon",
-  "source": "manual"
-}
-```
-
-Ejemplo inválido:
-
-```json
-{
-  "name": "Pi",
-  "category": "pokemon"
-}
-```
-
-Este ejemplo es inválido porque `name` tiene menos de 3 caracteres.
-
-FastAPI devolverá automáticamente un error `422`.
-
-### Creación del nuevo item
-
-```python
-new_item = {
-    "id": current_id,
-    "name": item.name,
-    "description": item.description,
-    "category": item.category,
-    "source": item.source
-}
-```
-
-Construimos un diccionario usando los datos validados.
-
-### Endpoint `PUT`
-
-```python
-@router.put("/{item_id}", response_model=ItemResponse)
-def update_item(item_id: int, item_data: ItemUpdate):
-```
-
-Este endpoint actualiza un item existente.
-
-Usa `ItemUpdate`, no `ItemCreate`, porque en una actualización los campos pueden
-ser opcionales.
-
-### `model_dump(exclude_unset=True)`
-
-```python
-update_data = item_data.model_dump(exclude_unset=True)
-```
-
-Esta línea convierte el modelo Pydantic en diccionario.
-
-`exclude_unset=True` significa:
-
-> Solo incluye los campos que el usuario realmente envió.
-
-Ejemplo:
-
-Si el cliente envía:
-
-```json
-{
-  "name": "Charmander"
-}
-```
-
-Entonces `update_data` será:
-
-```json
-{
-  "name": "Charmander"
-}
-```
-
-No incluirá `description`, `category` ni `source`.
-
-Esto evita sobrescribir campos con `None` sin querer.
-
-### Endpoint `DELETE`
-
-```python
-@router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_item(item_id: int):
-```
-
-Este endpoint elimina un item.
-
-Usa código `204 No Content`, porque si la eliminación fue exitosa, no
-necesitamos devolver cuerpo de respuesta.
-
-## 18. Paso 5: crear servicio externo
-
-Archivo:
-
-```text
-app/services/external_service.py
-```
-
-Código:
-
-```python
+# app/services/external_service.py
 import requests
 from fastapi import HTTPException, status
 
 
 def get_pokemon_from_api(pokemon_name: str):
+    """Consulta la PokéAPI y retorna los datos mapeados al formato de nuestra API."""
     url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_name.lower()}"
 
-    response = requests.get(url)
+    try:
+        response = requests.get(url)
+    except requests.exceptions.RequestException:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="La API externa no está disponible en este momento"
+        )
 
+    # Si la API externa responde que el recurso no existe
     if response.status_code == 404:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="El pokemon solicitado no existe en la API externa"
+            detail=f"El pokemon '{pokemon_name}' no existe en la API externa"
         )
 
+    # Si ocurre otro fallo en el servidor externo
     if response.status_code != 200:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Error al consultar la API externa"
+            detail="Error inesperado al consultar la API externa"
         )
 
     data = response.json()
 
+    # Mapeamos los datos de la respuesta original a nuestra estructura limpia
     return {
         "external_id": data["id"],
         "name": data["name"],
@@ -971,72 +528,26 @@ def get_pokemon_from_api(pokemon_name: str):
     }
 ```
 
-## 19. Explicación del servicio externo
+---
 
-Este archivo no define rutas.
+## 19. Desglose del Servicio Externo
 
-Su responsabilidad es consultar la API externa.
+Al separar este servicio, logramos que el código sea modular y robusto:
 
-Esto es importante porque no queremos mezclar todo en el router.
+*   **Aislamiento:** Si mañana la API externa cambia de formato o de proveedor (por ejemplo, pasamos de usar PokéAPI a otra API de videojuegos), solo necesitaremos modificar el archivo `external_service.py`. Las rutas e interfaces del frontend permanecerán intactas.
+*   **Traducción de Errores (Bad Gateway):** Si la API de Pokémon responde con errores inesperados o se cae, nuestro backend intercepta ese evento y responde de manera elegante con un código **`502 Bad Gateway`** o **`503 Service Unavailable`**, indicando al cliente que el problema radica en un servicio de terceros y no en nuestra propia aplicación.
+*   **Mapeo de Datos:** El servicio toma el JSON crudo del exterior (que contiene cientos de claves complejas como sprites, habilidades y estadísticas) y extrae únicamente los tres campos necesarios para cumplir con `ExternalItemResponse`.
 
-- El router debe encargarse de recibir solicitudes HTTP.
-- El servicio debe encargarse de la lógica.
+---
 
-```python
-url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_name.lower()}"
-```
+## 20. Paso 6: Creación del Enrutador Externo
 
-Construimos la URL con el nombre del pokemon.
+Una vez que la lógica de negocio para consultar la API externa está lista en el servicio, crearemos el router que expondrá esta funcionalidad a los usuarios.
 
-```python
-response = requests.get(url)
-```
-
-Consultamos la API externa.
+Abre el archivo `app/routers/external.py` y define la ruta:
 
 ```python
-if response.status_code == 404:
-```
-
-Si la API externa responde `404`, nosotros también respondemos con un error
-claro.
-
-```python
-if response.status_code != 200:
-```
-
-Si ocurre otro error, devolvemos `502 Bad Gateway`.
-
-Este código significa que nuestra API intentó consultar otro servicio, pero ese
-servicio respondió mal o no pudo procesar correctamente la solicitud.
-
-```python
-data = response.json()
-```
-
-Convertimos la respuesta JSON en un diccionario de Python.
-
-```python
-return {
-    "external_id": data["id"],
-    "name": data["name"],
-    "source": "pokeapi"
-}
-```
-
-No devolvemos toda la respuesta original. Solo devolvemos lo que necesitamos.
-
-## 20. Paso 6: crear router externo
-
-Archivo:
-
-```text
-app/routers/external.py
-```
-
-Código:
-
-```python
+# app/routers/external.py
 from fastapi import APIRouter
 from app.schemas.item_schema import ExternalItemResponse
 from app.services.external_service import get_pokemon_from_api
@@ -1049,551 +560,261 @@ router = APIRouter(
 
 @router.get("/pokemon/{pokemon_name}", response_model=ExternalItemResponse)
 def get_external_pokemon(pokemon_name: str):
+    """Endpoint para consultar y obtener un pokemon adaptado desde la API externa."""
     return get_pokemon_from_api(pokemon_name)
 ```
 
-## 21. Explicación del router externo
+---
+
+## 21. Desglose del Enrutador Externo
+
+Este router es sumamente sencillo e ilustra a la perfección el principio de modularidad:
+
+*   **Responsabilidad única:** El endpoint se limita a recibir la petición HTTP, pasar el parámetro `pokemon_name` al servicio correspondiente, y retornar el diccionario obtenido.
+*   **Seguridad en el formato:** El parámetro `response_model=ExternalItemResponse` asegura que lo que retorne el servicio `get_pokemon_from_api` se ajustará estrictamente al modelo esperado antes de ser entregado al cliente final.
+
+---
+
+## 22. Paso 7: Configuración de la Aplicación
+
+Para centralizar los valores globales y la metadata de tu API, utilizaremos el módulo de configuración `app/core/config.py`. Abre el archivo e inserta estas variables de configuración básicas:
 
 ```python
-router = APIRouter(
-    prefix="/external",
-    tags=["External API"]
+# app/core/config.py
+APP_NAME = "API de Items Académicos"
+APP_VERSION = "1.0.0"
+APP_DESCRIPTION = (
+    "API académica para la práctica avanzada de modelos, "
+    "validaciones, routers y estructuras de carpetas profesionales con FastAPI."
 )
 ```
 
-Todas las rutas de este archivo empiezan con `/external`.
+*(En proyectos futuros y en producción, este archivo se ampliará para importar bibliotecas como `pydantic-settings` y cargar de forma segura variables de entorno de un archivo `.env`, tales como contraseñas de bases de datos o llaves de API).*
+
+---
+
+## 23. Paso 8: El Punto de Entrada Central (`main.py`)
+
+Con todos los módulos y submódulos creados, es momento de unirlos en la aplicación principal. Abre `app/main.py` y escribe el siguiente código:
 
 ```python
-@router.get("/pokemon/{pokemon_name}", response_model=ExternalItemResponse)
-```
-
-La ruta completa será:
-
-```http
-GET /external/pokemon/{pokemon_name}
-```
-
-Ejemplo:
-
-```http
-GET /external/pokemon/pikachu
-```
-
-La respuesta tendrá esta forma:
-
-```json
-{
-  "external_id": 25,
-  "name": "pikachu",
-  "source": "pokeapi"
-}
-```
-
-## 22. Paso 7: archivo de configuración
-
-Archivo:
-
-```text
-app/core/config.py
-```
-
-Código:
-
-```python
-APP_NAME = "API de Items Académicos"
-APP_VERSION = "1.0.0"
-```
-
-### Explicación
-
-Por ahora este archivo es sencillo.
-
-Más adelante puede usarse para cargar variables de entorno como:
-
-- URL de Supabase.
-- API key.
-- Configuración de entorno.
-- Nombre de la aplicación.
-
-## 23. Paso 8: archivo principal `main.py`
-
-Archivo:
-
-```text
-app/main.py
-```
-
-Código:
-
-```python
+# app/main.py
 from fastapi import FastAPI
-from app.core.config import APP_NAME, APP_VERSION
+from app.core.config import APP_NAME, APP_VERSION, APP_DESCRIPTION
 from app.routers import items, external
 
 app = FastAPI(
     title=APP_NAME,
     version=APP_VERSION,
-    description="API académica para practicar modelos, validaciones, routers y estructura profesional con FastAPI."
+    description=APP_DESCRIPTION
 )
 
+# Conectamos los enrutadores modulares a la aplicación central
 app.include_router(items.router)
 app.include_router(external.router)
 
 
 @app.get("/")
 def root():
+    """Ruta raíz de la API para verificar el estado del servicio."""
     return {
-        "message": "Bienvenido a la API de Items Académicos",
-        "docs": "/docs"
+        "message": f"Bienvenido a la {APP_NAME}",
+        "docs": "/docs",
+        "status": "online"
     }
 ```
 
-## 24. Explicación de `main.py`
+---
 
-```python
-app = FastAPI(
-    title=APP_NAME,
-    version=APP_VERSION,
-    description="..."
-)
-```
+## 24. Desglose de `main.py`
 
-Creamos la aplicación principal de FastAPI.
+*   **Instancia central de `FastAPI`:** Configura el título, la versión y la descripción de la aplicación importando los valores globales definidos en `app/core/config.py`.
+*   **`app.include_router(...)`:** Registra los routers modulares en el núcleo del framework. Si olvidas llamar a `include_router` para alguno de tus módulos, FastAPI no sabrá que esos archivos existen y sus endpoints arrojarán errores `404 Not Found` al intentar consultarlos.
 
-Estos datos aparecen en la documentación automática.
+---
 
-```python
-app.include_router(items.router)
-app.include_router(external.router)
-```
+## 25. Paso 9: Ejecución de la Aplicación
 
-Aquí conectamos los routers con la aplicación principal.
-
-Sin estas líneas, las rutas de `items.py` y `external.py` no funcionarían.
-
-```python
-@app.get("/")
-def root():
-```
-
-Creamos una ruta inicial para comprobar que la API está funcionando.
-
-## 25. Paso 9: ejecutar el proyecto
-
-Desde la terminal, estando en la carpeta del proyecto:
+Asegúrate de tener el entorno virtual activo en tu terminal y de encontrarte en el directorio raíz del proyecto (`clase_2_fastapi`, justo en la carpeta que contiene el directorio `app/`). Ejecuta el servidor de desarrollo local utilizando `uvicorn`:
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-### Explicación
+### ¿Qué significan estos argumentos?
 
-```bash
-uvicorn
-```
+*   `app.main:app`: Indica que busque el módulo `main.py` dentro de la carpeta `app`, y que dentro de él ejecute la variable de aplicación `app = FastAPI()`.
+*   `--reload`: Modo desarrollo. Reinicia el servidor de manera automática cada vez que detecta un cambio en tus archivos de código.
 
-Es el servidor que ejecuta nuestra aplicación.
+Abre tu navegador de preferencia y dirígete a:
+*   Página de inicio: [http://127.0.0.1:8000](http://127.0.0.1:8000)
+*   Documentación Interactiva (Swagger UI): [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-```bash
-app.main:app
-```
+---
 
-Significa:
+## 26. Rutas Disponibles en la Documentación Automática
 
-- Busca la carpeta `app`.
-- Dentro busca el archivo `main.py`.
-- Dentro busca la variable `app`.
-
-```bash
---reload
-```
-
-Reinicia automáticamente el servidor cuando modificamos el código.
-
-Abrir en el navegador:
-
-```text
-http://127.0.0.1:8000
-```
-
-Documentación automática:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-## 26. Endpoints que deben aparecer en `/docs`
-
-Al terminar, los estudiantes deberían ver:
+Al acceder a la documentación interactiva en `/docs`, deberás visualizar la lista completa de endpoints registrados y agrupados adecuadamente:
 
 ```http
-GET     /
-GET     /items/
-POST    /items/
-GET     /items/{item_id}
-PUT     /items/{item_id}
-DELETE  /items/{item_id}
-GET     /external/pokemon/{pokemon_name}
+GET     /                                   Ruta raíz de estado
+GET     /items/                             Obtener todos los ítems
+POST    /items/                             Registrar un nuevo ítem
+GET     /items/{item_id}                    Consultar un ítem por ID
+PUT     /items/{item_id}                    Actualizar un ítem por ID
+DELETE  /items/{item_id}                    Eliminar un ítem por ID
+GET     /external/pokemon/{pokemon_name}    Consultar Pokémon externo
 ```
 
-## 27. Pruebas sugeridas en clase
+---
 
-### Prueba 1: crear item válido
+## 27. Pruebas y Validación de Funcionamiento
 
-Endpoint:
+A continuación, se describen los escenarios clave que debes probar en la documentación interactiva (o mediante herramientas como Postman o Insomnia) para verificar que las validaciones y los flujos funcionen correctamente:
 
-```http
-POST /items/
+### Escenario 1: Creación Exitosa de un Ítem
+*   **Endpoint:** `POST /items/`
+*   **Cuerpo del JSON:**
+    ```json
+    {
+      "name": "Pikachu de Felpa",
+      "description": "Juguete coleccionable de tipo eléctrico",
+      "category": "Juguetes",
+      "source": "manual"
+    }
+    ```
+*   **Resultado esperado:** Código HTTP `201 Created`. El JSON de respuesta debe incluir el `"id": 1` asignado automáticamente.
+
+### Escenario 2: Intento de Creación con Datos Inválidos (Fallo de Validación)
+*   **Endpoint:** `POST /items/`
+*   **Cuerpo del JSON:**
+    ```json
+    {
+      "name": "Pi",
+      "description": "Nombre demasiado corto",
+      "category": "Juguetes"
+    }
+    ```
+*   **Resultado esperado:** Código HTTP `422 Unprocessable Entity`. FastAPI y Pydantic detendrán la solicitud indicando que el campo `name` requiere una longitud mínima de 3 caracteres.
+
+### Escenario 3: Obtener la Lista de Ítems
+*   **Endpoint:** `GET /items/`
+*   **Resultado esperado:** Código HTTP `200 OK`. Retorna un arreglo JSON conteniendo el ítem creado en el Escenario 1.
+
+### Escenario 4: Consultar un Ítem Inexistente
+*   **Endpoint:** `GET /items/999`
+*   **Resultado esperado:** Código HTTP `404 Not Found` con el mensaje JSON `{"detail": "El item solicitado no existe"}`.
+
+### Escenario 5: Actualizar Parcialmente un Ítem
+*   **Endpoint:** `PUT /items/1`
+*   **Cuerpo del JSON:**
+    ```json
+    {
+      "name": "Pikachu Gigante Actualizado"
+    }
+    ```
+*   **Resultado esperado:** Código HTTP `200 OK`. La respuesta debe mostrar el nombre actualizado, pero manteniendo la descripción y categoría intactas (gracias a `exclude_unset=True`).
+
+### Escenario 6: Consultar un Pokémon Existente en la API Externa
+*   **Endpoint:** `GET /external/pokemon/charmander`
+*   **Resultado esperado:** Código HTTP `200 OK`. La respuesta JSON debe tener la forma reducida especificada en tu modelo:
+    ```json
+    {
+      "external_id": 4,
+      "name": "charmander",
+      "source": "pokeapi"
+    }
+    ```
+
+### Escenario 7: Consultar un Pokémon que no Existe en la API Externa
+*   **Endpoint:** `GET /external/pokemon/no_existe_este_nombre`
+*   **Resultado esperado:** Código HTTP `404 Not Found`.
+
+---
+
+## 28. Resumen de Responsabilidades de cada Archivo
+
+A modo de repaso, revisa cómo fluye la información y qué rol cumple cada pieza del rompecabezas:
+
+1.  **`main.py`:** Es la puerta de entrada. Agrupa todos los enrutadores y arranca la aplicación.
+2.  **`routers/items.py` y `routers/external.py`:** Controlan el tráfico de entrada. Definen las URLs, reciben los parámetros y deciden qué responder.
+3.  **`schemas/item_schema.py`:** Define las reglas del juego. Valida que los datos que entran y salen tengan el formato correcto.
+4.  **`services/external_service.py`:** Realiza el trabajo pesado fuera de la API. Se comunica con servidores externos y procesa sus respuestas.
+5.  **`core/config.py`:** Almacena los metadatos globales del proyecto.
+
+---
+
+## 29. Desafío Práctico: Reorganiza tu API
+
+**Tu turno de practicar:** A partir del proyecto que construiste en la clase anterior, reestructúralo por completo para aplicar este diseño modular.
+
+### Requisitos del Desafío:
+1.  Crea la estructura de carpetas `app/`, `routers/`, `schemas/`, `services/` y `core/`.
+2.  Configura e implementa los 4 esquemas de Pydantic estudiados en `item_schema.py`.
+3.  Asegura el correcto registro de los routers en `main.py` empleando `app.include_router()`.
+4.  Define códigos de estado HTTP semánticos en todos tus endpoints usando `status`.
+5.  Verifica que tus respuestas devuelvan exactamente lo que deseas a través de `response_model`.
+
+---
+
+## 30. Preguntas de Autoevaluación
+
+Para verificar que has comprendido los conceptos teóricos clave de esta sesión, intenta responder a las siguientes preguntas:
+
+*   *¿Qué archivo de nuestro proyecto se encarga de levantar y configurar la aplicación principal de FastAPI?*
+*   *¿Por qué el modelo `ItemCreate` no debe definir el campo `id`?*
+*   *¿Cuál es la diferencia de comportamiento entre usar `ItemCreate` y usar `ItemUpdate` en los endpoints correspondientes?*
+*   *¿Cuál es el beneficio de utilizar `response_model` en los decoradores de rutas?*
+*   *Si ingresas a [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) y una ruta que creaste no aparece en la lista, ¿qué validación deberías hacer en `main.py`?*
+*   *¿Qué diferencia conceptual y de código HTTP existe entre un error `404` y un error `422`?*
+*   *¿Por qué es una mala práctica retornar un mensaje de error plano en un diccionario (como `return {"error": "..."}`) en lugar de lanzar una `HTTPException`?*
+
+---
+
+## 31. Concepto Adicional: Validación Automática de Datos
+
+Una de las mayores ventajas de FastAPI y Pydantic es que no necesitas escribir validaciones manuales repetitivas en tus funciones.
+
+### Ejemplo de código manual (Mala práctica / Tedioso):
+```python
+# Sin Pydantic, tendrías que validar todo a mano en cada función
+@app.post("/items")
+def create_item(name: str, category: str):
+    if not name or len(name) < 3:
+        return {"error": "El nombre debe tener al menos 3 caracteres"}
+    if not category:
+        return {"error": "La categoría es obligatoria"}
+    # ... más validaciones
 ```
 
-Body:
+Con FastAPI, al definir `item: ItemCreate`, Pydantic se encarga de interceptar y rechazar solicitudes no válidas antes de que toquen tu base de datos o lógica interna. Esto reduce drásticamente el código boilerplate de validaciones en tu backend.
 
-```json
-{
-  "name": "Pikachu",
-  "description": "Pokemon de tipo eléctrico",
-  "category": "pokemon",
-  "source": "manual"
-}
-```
+---
 
-Respuesta esperada:
+## 32. Concepto Adicional: Documentación Interactiva
 
-```json
-{
-  "id": 1,
-  "name": "Pikachu",
-  "description": "Pokemon de tipo eléctrico",
-  "category": "pokemon",
-  "source": "manual"
-}
-```
+FastAPI lee la firma de tus funciones (los tipos de datos de los argumentos, los valores por defecto y el `response_model`) y genera automáticamente la especificación OpenAPI de tu aplicación. 
 
-Código HTTP esperado:
+Esto se traduce en la interfaz interactiva de Swagger UI que consultas en `/docs`. A través de ella, no solo puedes leer cómo consumir tu API, sino que puedes realizar peticiones de prueba en tiempo real directamente desde el navegador haciendo clic en el botón **"Try it out"**.
 
-```text
-201 Created
-```
+---
 
-### Prueba 2: crear item inválido
+## 33. Concepto Adicional: Filtrado y Seguridad con `response_model`
 
-Endpoint:
-
-```http
-POST /items/
-```
-
-Body:
-
-```json
-{
-  "name": "Pi",
-  "description": "Nombre demasiado corto",
-  "category": "pokemon"
-}
-```
-
-Resultado esperado:
-
-FastAPI debe devolver error de validación porque `name` tiene menos de 3
-caracteres.
-
-Código esperado:
-
-```text
-422 Unprocessable Entity
-```
-
-### Prueba 3: listar items
-
-Endpoint:
-
-```http
-GET /items/
-```
-
-Respuesta esperada:
-
-```json
-[
-  {
-    "id": 1,
-    "name": "Pikachu",
-    "description": "Pokemon de tipo eléctrico",
-    "category": "pokemon",
-    "source": "manual"
-  }
-]
-```
-
-### Prueba 4: consultar item existente
-
-Endpoint:
-
-```http
-GET /items/1
-```
-
-Respuesta esperada:
-
-```json
-{
-  "id": 1,
-  "name": "Pikachu",
-  "description": "Pokemon de tipo eléctrico",
-  "category": "pokemon",
-  "source": "manual"
-}
-```
-
-### Prueba 5: consultar item inexistente
-
-Endpoint:
-
-```http
-GET /items/999
-```
-
-Respuesta esperada:
-
-```json
-{
-  "detail": "El item solicitado no existe"
-}
-```
-
-Código esperado:
-
-```text
-404 Not Found
-```
-
-### Prueba 6: actualizar item
-
-Endpoint:
-
-```http
-PUT /items/1
-```
-
-Body:
-
-```json
-{
-  "name": "Pikachu actualizado"
-}
-```
-
-Respuesta esperada:
-
-```json
-{
-  "id": 1,
-  "name": "Pikachu actualizado",
-  "description": "Pokemon de tipo eléctrico",
-  "category": "pokemon",
-  "source": "manual"
-}
-```
-
-### Prueba 7: consultar API externa
-
-Endpoint:
-
-```http
-GET /external/pokemon/pikachu
-```
-
-Respuesta esperada:
-
-```json
-{
-  "external_id": 25,
-  "name": "pikachu",
-  "source": "pokeapi"
-}
-```
-
-### Prueba 8: consultar dato inexistente en API externa
-
-Endpoint:
-
-```http
-GET /external/pokemon/noexiste123
-```
-
-Respuesta esperada:
-
-```json
-{
-  "detail": "El pokemon solicitado no existe en la API externa"
-}
-```
-
-Código esperado:
-
-```text
-404 Not Found
-```
-
-## 28. Guion sugerido para explicar la diferencia entre archivos
-
-Puedes explicarlo así:
-
-- `main.py` es la puerta principal de la aplicación.
-- `routers/items.py` contiene las rutas relacionadas con items.
-- `routers/external.py` contiene las rutas relacionadas con APIs externas.
-- `schemas/item_schema.py` contiene los modelos Pydantic.
-- `services/external_service.py` contiene la lógica para consumir la API
-  externa.
-- `core/config.py` contiene configuración general del proyecto.
-
-Luego puedes preguntar:
-
-> ¿Dónde pondríamos la lógica para conectarnos a Supabase?
-
-Respuesta esperada:
-
-```text
-En una carpeta como app/db/ o app/database/
-```
-
-> ¿Dónde pondríamos las variables de entorno?
-
-Respuesta esperada:
-
-```text
-En un archivo .env, leído desde core/config.py
-```
-
-## 29. Actividad práctica en clase
-
-### Actividad: reorganizar la API en carpetas
-
-#### Instrucciones para estudiantes
-
-A partir del proyecto trabajado en la clase anterior, deben reorganizar su API
-usando la siguiente estructura:
-
-```text
-app/
-├── main.py
-├── routers/
-│   ├── items.py
-│   └── external.py
-├── schemas/
-│   └── item_schema.py
-├── services/
-│   └── external_service.py
-└── core/
-    └── config.py
-```
-
-Deben crear los siguientes modelos:
-
-- `ItemCreate`
-- `ItemUpdate`
-- `ItemResponse`
-- `ExternalItemResponse`
-
-Deben implementar como mínimo estos endpoints:
-
-```http
-GET     /items/
-POST    /items/
-GET     /items/{item_id}
-PUT     /items/{item_id}
-DELETE  /items/{item_id}
-GET     /external/pokemon/{pokemon_name}
-```
-
-Deben usar:
-
-- `BaseModel`
-- `Field`
-- `response_model`
-- `status_code`
-- `HTTPException`
-- `APIRouter`
-- Separación por carpetas
-
-## 30. Preguntas durante la actividad
-
-Mientras trabajan, puedes hacer preguntas como:
-
-- ¿Qué archivo se encarga de levantar la aplicación?
-- ¿Qué archivo contiene las rutas de items?
-- ¿Qué modelo se usa para crear un item?
-- ¿Por qué `ItemCreate` no tiene `id`?
-- ¿Por qué `ItemUpdate` tiene campos opcionales?
-- ¿Qué hace `response_model`?
-- ¿Qué pasa si envío un nombre con menos de 3 caracteres?
-- ¿Qué error debe devolver la API si el item no existe?
-- ¿Qué diferencia hay entre un error `404` y un error `422`?
-- ¿Por qué no devolvemos toda la respuesta original de PokéAPI?
-
-## 31. Mini explicación: validación automática
-
-Puedes mostrar este ejemplo en `/docs`.
-
-Body inválido:
-
-```json
-{
-  "name": "ab",
-  "category": "pokemon"
-}
-```
-
-Luego explicar:
-
-> Nosotros no escribimos un `if` manual para revisar la longitud del nombre.
-> FastAPI y Pydantic lo hicieron automáticamente porque el modelo decía
-> `min_length=3`.
-
-Eso ayuda a que entiendan el valor de los modelos.
-
-## 32. Mini explicación: documentación automática
-
-Cuando entren a:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-Deben observar:
-
-- Los endpoints agrupados por `tags`.
-- Los modelos de entrada.
-- Los modelos de respuesta.
-- Los códigos de estado.
-- Los parámetros de ruta.
-- Los cuerpos JSON esperados.
-
-Puedes decir:
-
-> La documentación no la escribimos a mano. FastAPI la genera a partir del
-> código. Por eso es importante escribir bien los modelos, los tipos y los
-> decoradores.
-
-## 33. Mini explicación: por qué `response_model` protege la salida
-
-Puedes mostrar este ejemplo conceptual:
-
-Supongamos que internamente tenemos este diccionario:
+Imagina que tu base de datos contiene información de usuarios con la siguiente estructura interna:
 
 ```python
-user = {
-    "id": 1,
-    "name": "Laura",
-    "email": "laura@email.com",
-    "password": "123456"
+user_in_db = {
+    "id": 42,
+    "name": "Sofía Díaz",
+    "email": "sofia@example.com",
+    "password_hash": "pbkdf2:sha256:260000$tY2b9..."
 }
 ```
 
-Si devolvemos el diccionario completo, podríamos exponer datos sensibles.
+Si retornas el diccionario completo directamente, estarías exponiendo la contraseña cifrada a la red, lo que representa un grave problema de seguridad. 
 
-Pero si usamos un modelo de respuesta:
+Sin embargo, si defines un modelo de respuesta restrictivo en Pydantic:
 
 ```python
 class UserResponse(BaseModel):
@@ -1602,125 +823,48 @@ class UserResponse(BaseModel):
     email: str
 ```
 
-FastAPI puede filtrar la respuesta para que no salga el campo `password`.
+Y declaras en tu endpoint `@router.get("/users/{id}", response_model=UserResponse)`, FastAPI filtrará la información y solo retornará el `id`, `name` y `email`, removiendo de manera segura el campo `password_hash` del JSON enviado al cliente.
 
-### Explicación
+---
 
-El modelo de respuesta no solo documenta. También ayuda a controlar qué datos
-salen de la API.
+## 34. Guía de Solución de Problemas (Troubleshooting)
 
-## 34. Errores comunes esperados
+Si encuentras dificultades al levantar o probar tu proyecto, consulta esta lista de errores comunes y sus soluciones:
 
-### Error 1: olvidan incluir el router
+### Problema 1: "ModuleNotFoundError: No module named 'app'"
+*   **Causa:** Estás ejecutando el comando de `uvicorn` desde la carpeta incorrecta (por ejemplo, dentro del directorio `app/`), o bien no tienes el entorno virtual configurado y activo en esa ventana de la terminal.
+*   **Solución:** Posiciónate en la carpeta raíz del proyecto (donde se encuentra la carpeta `app/` como subdirectorio) y ejecuta `uvicorn app.main:app --reload`.
 
-Código faltante:
+### Problema 2: "Las rutas no aparecen en /docs o me da 404 al consultarlas"
+*   **Causa:** Creaste correctamente las rutas en tu archivo de router (`items.py` o `external.py`), pero olvidaste importarlo y registrarlo en el archivo raíz.
+*   **Solución:** Ve a `app/main.py` y asegúrate de tener las líneas `app.include_router(items.router)` y `app.include_router(external.router)`.
 
-```python
-app.include_router(items.router)
-```
+### Problema 3: "Al actualizar un ítem, los campos que no envío se borran o se ponen en null"
+*   **Causa:** En tu endpoint de actualización (`PUT`), convertiste el modelo a diccionario usando simplemente `item_data.model_dump()` sin parámetros.
+*   **Solución:** Asegúrate de usar `item_data.model_dump(exclude_unset=True)`. Esto garantiza que los campos que el cliente no envió en su JSON sean omitidos en la actualización, previniendo la sobreescritura accidental.
 
-Síntoma:
+### Problema 4: "Fallo al consultar Pokémon externo (502 Bad Gateway)"
+*   **Causa:** Tu servidor local no tiene acceso a internet para comunicarse con la PokéAPI, o bien escribiste mal la URL base del servicio externo en el archivo `external_service.py`.
+*   **Solución:** Verifica tu conexión a internet e inspecciona detalladamente la sintaxis de la URL en `get_pokemon_from_api`.
 
-```text
-La ruta no aparece en /docs.
-```
+---
 
-Solución:
+## 35. Conclusiones y Siguientes Pasos
 
-```text
-Verificar que el router esté importado e incluido en main.py.
-```
+¡Felicidades! Has dado un gran paso al estructurar tu aplicación de manera profesional. Has aprendido a validar datos de entrada, filtrar información de salida, mapear respuestas de servicios externos y organizar el backend en directorios con responsabilidades delimitadas.
 
-### Error 2: problema de importaciones
+Aunque por el momento tus datos se pierden al reiniciar el servidor debido al almacenamiento temporal en memoria, has dejado el proyecto listo para una transición limpia y directa hacia una base de datos persistente. En la siguiente sesión, conectarás esta misma estructura a Supabase y PostgreSQL para almacenar tu información de manera permanente.
 
-Ejemplo de error:
+---
 
-```text
-ModuleNotFoundError: No module named 'app'
-```
+## Referencias Oficiales de Consulta
 
-Causas comunes:
+Para profundizar en los temas abordados, puedes revisar la documentación oficial:
 
-- Ejecutaron `uvicorn` desde una carpeta incorrecta.
-- No están ubicados en la raíz del proyecto.
-- Escribieron mal la ruta del import.
-
-Solución:
-
-Ejecutar desde la carpeta donde está `app/`:
-
-```bash
-uvicorn app.main:app --reload
-```
-
-### Error 3: modelo mal usado
-
-Ejemplo:
-
-```python
-@router.post("/", response_model=ItemCreate)
-```
-
-Problema:
-
-La respuesta no debería usar `ItemCreate`, porque al crear un item esperamos
-devolver también el `id`.
-
-Solución:
-
-```python
-@router.post("/", response_model=ItemResponse)
-```
-
-### Error 4: actualizaciones que borran datos
-
-Código problemático:
-
-```python
-update_data = item_data.model_dump()
-```
-
-Esto puede incluir campos con `None` y sobrescribir datos existentes.
-
-Mejor:
-
-```python
-update_data = item_data.model_dump(exclude_unset=True)
-```
-
-### Error 5: devolver error como texto
-
-Incorrecto:
-
-```python
-return "No encontrado"
-```
-
-Mejor:
-
-```python
-raise HTTPException(
-    status_code=404,
-    detail="El recurso solicitado no existe"
-)
-```
-
-## 35. Cierre conceptual de la clase
-
-Puedes cerrar con esta idea:
-
-> Hoy la API dejó de ser un archivo suelto y empezó a parecerse a un backend
-> real. Ya tenemos modelos, validaciones, códigos de estado, manejo de errores,
-> documentación automática y separación por carpetas. Todavía no tenemos base de
-> datos real, pero ya estamos preparando el proyecto para conectarlo después a
-> Supabase.
-
-## Referencias oficiales
-
-- [FastAPI: Request Body](https://fastapi.tiangolo.com/tutorial/body/)
-- [FastAPI: Body - Fields](https://fastapi.tiangolo.com/tutorial/body-fields/)
-- [FastAPI: Response Model](https://fastapi.tiangolo.com/es/tutorial/response-model/)
-- [FastAPI: Response Status Code](https://fastapi.tiangolo.com/es/tutorial/response-status-code/)
-- [FastAPI: Handling Errors](https://fastapi.tiangolo.com/es/tutorial/handling-errors/)
-- [FastAPI: Bigger Applications - Multiple Files](https://fastapi.tiangolo.com/es/tutorial/bigger-applications/)
-- [Pydantic: Models](https://docs.pydantic.dev/latest/concepts/models/)
+*   [FastAPI: Cuerpo de Petición (Request Body)](https://fastapi.tiangolo.com/tutorial/body/)
+*   [FastAPI: Parámetros del Cuerpo y Campos (Body Fields)](https://fastapi.tiangolo.com/tutorial/body-fields/)
+*   [FastAPI: Modelo de Respuesta (Response Model)](https://fastapi.tiangolo.com/es/tutorial/response-model/)
+*   [FastAPI: Códigos de Estado de Respuesta (Response Status Code)](https://fastapi.tiangolo.com/es/tutorial/response-status-code/)
+*   [FastAPI: Manejo de Errores (Handling Errors)](https://fastapi.tiangolo.com/es/tutorial/handling-errors/)
+*   [FastAPI: Aplicaciones Más Grandes - Múltiples Archivos (Bigger Applications)](https://fastapi.tiangolo.com/es/tutorial/bigger-applications/)
+*   [Pydantic: Conceptos de Modelos (Models)](https://docs.pydantic.dev/latest/concepts/models/)
