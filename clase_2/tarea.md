@@ -1,46 +1,8 @@
-# Tarea: API de Items Académicos con FastAPI
+36. Tarea
+Tarea: Reorganizar y documentar la API
 
-## 1. Objetivo
+Cada estudiante o grupo debe entregar una API organizada con la siguiente estructura:
 
-Construir una API con FastAPI aplicando los conceptos trabajados en clase:
-
-- Modelos Pydantic.
-- Validaciones con `Field`.
-- Separación de modelos de creación, actualización y respuesta.
-- Uso de `response_model`.
-- Códigos de estado HTTP.
-- Manejo de errores con `HTTPException`.
-- Organización del proyecto por carpetas.
-- Uso de `APIRouter`.
-- Consumo de una API externa usando `requests`.
-
-La idea es que la API deje de estar en un solo archivo y empiece a tener una
-estructura más parecida a un backend real.
-
-## 2. Descripción general
-
-Debes crear una API llamada **API de Items Académicos**.
-
-La API debe permitir:
-
-- Crear items.
-- Listar items.
-- Consultar un item por ID.
-- Actualizar un item.
-- Eliminar un item.
-- Consultar un Pokémon desde PokéAPI.
-- Adaptar la respuesta externa a un modelo propio.
-
-Por ahora, los datos deben guardarse en memoria usando una lista de
-diccionarios.
-
-> Importante: no debes usar base de datos todavía.
-
-## 3. Estructura obligatoria del proyecto
-
-El proyecto debe tener esta estructura:
-
-```text
 app/
 ├── main.py
 ├── routers/
@@ -52,476 +14,119 @@ app/
 │   └── external_service.py
 └── core/
     └── config.py
-```
-
-## 4. Dependencias
-
-Debes instalar las siguientes dependencias:
-
-```bash
-pip install fastapi uvicorn requests
-```
-
-Para ejecutar el proyecto:
-
-```bash
-uvicorn app.main:app --reload
-```
-
-La API debe estar disponible en:
-
-```text
-http://127.0.0.1:8000
-```
-
-La documentación automática debe estar disponible en:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-## 5. Modelos obligatorios
-
-En el archivo:
-
-```text
-app/schemas/item_schema.py
-```
-
-Debes crear los siguientes modelos:
-
-- `ItemCreate`
-- `ItemUpdate`
-- `ItemResponse`
-- `ExternalItemResponse`
-
-### `ItemCreate`
-
-Debe usarse para crear un item.
-
-Debe tener:
-
-| Campo         | Tipo  | Reglas                                                 |
-| ------------- | ----- | ------------------------------------------------------ |
-| `name`        | `str` | Obligatorio, mínimo 3 caracteres, máximo 80 caracteres |
-| `description` | `str  | None`                                                  |
-| `category`    | `str` | Obligatorio, mínimo 3 caracteres, máximo 50 caracteres |
-| `source`      | `str  | None`                                                  |
-
-### `ItemUpdate`
-
-Debe usarse para actualizar un item.
-
-Todos sus campos deben ser opcionales.
-
-Debe permitir actualizar solo una parte del item, por ejemplo:
-
-```json
-{
-  "name": "Nuevo nombre"
-}
-```
-
-### `ItemResponse`
-
-Debe usarse como modelo de respuesta para los items internos.
 
 Debe incluir:
 
-| Campo         | Tipo  |
-| ------------- | ----- |
-| `id`          | `int` |
-| `name`        | `str` |
-| `description` | `str  |
-| `category`    | `str` |
-| `source`      | `str  |
+Modelo ItemCreate.
+Modelo ItemUpdate.
+Modelo ItemResponse.
+Modelo ExternalItemResponse.
+Endpoint para crear item.
+Endpoint para listar items.
+Endpoint para consultar item por ID.
+Endpoint para actualizar item.
+Endpoint para eliminar item.
+Endpoint para consultar una API externa.
+Manejo de errores con HTTPException.
+Uso de response_model.
+Uso de códigos de estado HTTP.
+Captura de pantalla de /docs.
+37. Entregables
 
-### `ExternalItemResponse`
+El estudiante debe entregar:
 
-Debe usarse para responder datos adaptados desde PokéAPI.
+Carpeta del proyecto o repositorio.
+Captura de /docs.
+Captura de una validación fallida.
+Captura de un error 404.
+Breve explicación escrita de la estructura de carpetas.
+38. Preguntas de sustentación
 
-Debe incluir:
+Estas preguntas pueden usarse al final o en la próxima clase:
 
-| Campo         | Tipo  |
-| ------------- | ----- |
-| `external_id` | `int` |
-| `name`        | `str` |
-| `source`      | `str` |
+¿Qué es un modelo Pydantic?
+¿Para qué sirve BaseModel?
+¿Para qué sirve Field?
+¿Qué diferencia hay entre ItemCreate, ItemUpdate y ItemResponse?
+¿Por qué no se recomienda usar el mismo modelo para crear, actualizar y responder?
+¿Qué hace response_model?
+¿Qué pasa si el cliente envía un dato inválido?
+¿Qué código HTTP se usa cuando se crea un recurso?
+¿Qué código HTTP se usa cuando un recurso no existe?
+¿Qué es HTTPException?
+¿Qué es APIRouter?
+¿Por qué separamos rutas, esquemas y servicios?
+¿Qué archivo se encarga de iniciar la aplicación?
+¿Qué archivo contiene la lógica para consumir la API externa?
+¿Por qué no devolvemos toda la respuesta original de una API externa?
+¿Qué aparece automáticamente en /docs?
+¿Qué significa ejecutar uvicorn app.main:app --reload?
+¿Qué diferencia hay entre path parameter y request body?
+¿Por qué ItemUpdate tiene campos opcionales?
+¿Qué mejoraría cuando conectemos Supabase?
+39. Reto corto en clase
+Reto: agregar búsqueda por categoría
 
-## 6. Endpoints obligatorios
+Agregar un endpoint:
 
-La API debe implementar estos endpoints:
+GET /items/search?category=pokemon
 
-```http
-GET     /
-GET     /items/
-POST    /items/
-GET     /items/{item_id}
-PUT     /items/{item_id}
-DELETE  /items/{item_id}
-GET     /external/pokemon/{pokemon_name}
-```
+Debe devolver todos los items que pertenezcan a esa categoría.
 
-## 7. Requisitos por endpoint
+Código sugerido:
 
-### `GET /`
+@router.get("/search/", response_model=list[ItemResponse])
+def search_items_by_category(category: str):
+    results = []
 
-Debe devolver un mensaje inicial.
+    for item in items_db:
+        if item["category"].lower() == category.lower():
+            results.append(item)
 
-Respuesta esperada:
+    return results
 
-```json
-{
-  "message": "Bienvenido a la API de Items Académicos",
-  "docs": "/docs"
-}
-```
+Explicación:
 
-### `GET /items/`
+Aquí se practica parámetro de consulta.
 
-Debe listar todos los items guardados en memoria.
+La ruta se usaría así:
 
-Debe usar:
+GET /items/search/?category=pokemon
 
-```python
-response_model=list[ItemResponse]
-```
+Pregunta para los estudiantes:
 
-### `POST /items/`
-
-Debe crear un nuevo item.
-
-Debe recibir:
-
-```python
-ItemCreate
-```
-
-Debe responder:
-
-```python
-ItemResponse
-```
-
-Debe usar el código HTTP:
-
-```text
-201 Created
-```
-
-Ejemplo de body válido:
-
-```json
-{
-  "name": "Pikachu",
-  "description": "Pokemon de tipo eléctrico",
-  "category": "pokemon",
-  "source": "manual"
-}
-```
-
-### `GET /items/{item_id}`
-
-Debe consultar un item por ID.
-
-Si el item existe, debe devolverlo.
-
-Si el item no existe, debe responder con:
-
-```text
-404 Not Found
-```
-
-Respuesta esperada cuando no existe:
-
-```json
-{
-  "detail": "El item solicitado no existe"
-}
-```
-
-### `PUT /items/{item_id}`
-
-Debe actualizar un item existente.
-
-Debe recibir:
-
-```python
-ItemUpdate
-```
-
-Debe usar:
-
-```python
-model_dump(exclude_unset=True)
-```
-
-Esto evita borrar campos que el usuario no envió.
-
-Si el item no existe, debe responder con:
-
-```text
-404 Not Found
-```
-
-### `DELETE /items/{item_id}`
-
-Debe eliminar un item existente.
-
-Si el item se elimina correctamente, debe responder con:
-
-```text
-204 No Content
-```
-
-Si el item no existe, debe responder con:
-
-```text
-404 Not Found
-```
-
-### `GET /external/pokemon/{pokemon_name}`
-
-Debe consultar PokéAPI usando `requests`.
-
-Ejemplo:
-
-```http
-GET /external/pokemon/pikachu
-```
+¿Por qué category es query parameter y no path parameter?
 
 Respuesta esperada:
 
-```json
+Porque no estamos consultando un recurso único por identificador, sino filtrando una colección.
+
+40. Reto adicional para estudiantes avanzados
+Reto: guardar un resultado externo como item local
+
+Crear un endpoint:
+
+POST /external/pokemon/{pokemon_name}/save
+
+Objetivo:
+
+Consultar PokéAPI, tomar el resultado y guardarlo en items_db.
+
+Respuesta esperada:
+
 {
-  "external_id": 25,
+  "id": 2,
   "name": "pikachu",
+  "description": "Pokemon importado desde API externa",
+  "category": "pokemon",
   "source": "pokeapi"
 }
-```
 
-Si el Pokémon no existe, debe responder con:
+Pista:
 
-```text
-404 Not Found
-```
+En external.py podrían importar temporalmente items_db y current_id, aunque más adelante esto debería mejorarse con una capa de servicio o base de datos.
 
-Respuesta esperada:
+Este reto sirve para conectar dos ideas:
 
-```json
-{
-  "detail": "El pokemon solicitado no existe en la API externa"
-}
-```
-
-## 8. Requisitos técnicos
-
-El proyecto debe usar obligatoriamente:
-
-- `BaseModel`
-- `Field`
-- `response_model`
-- `status_code`
-- `HTTPException`
-- `APIRouter`
-- `requests`
-- Separación por carpetas
-
-No se permite:
-
-- Poner toda la API en un solo archivo.
-- Crear un único modelo para todo.
-- Devolver errores como strings simples.
-- Devolver toda la respuesta cruda de PokéAPI.
-- Usar base de datos en esta tarea.
-
-## 9. Pruebas mínimas
-
-Debes probar tu API desde `/docs`.
-
-### Prueba 1: crear item válido
-
-Endpoint:
-
-```http
-POST /items/
-```
-
-Body:
-
-```json
-{
-  "name": "Pikachu",
-  "description": "Pokemon de tipo eléctrico",
-  "category": "pokemon",
-  "source": "manual"
-}
-```
-
-Resultado esperado:
-
-```text
-201 Created
-```
-
-### Prueba 2: crear item inválido
-
-Endpoint:
-
-```http
-POST /items/
-```
-
-Body:
-
-```json
-{
-  "name": "Pi",
-  "description": "Nombre demasiado corto",
-  "category": "pokemon"
-}
-```
-
-Resultado esperado:
-
-```text
-422 Unprocessable Entity
-```
-
-### Prueba 3: listar items
-
-Endpoint:
-
-```http
-GET /items/
-```
-
-Resultado esperado:
-
-Debe aparecer la lista de items creados.
-
-### Prueba 4: consultar item existente
-
-Endpoint:
-
-```http
-GET /items/1
-```
-
-Resultado esperado:
-
-Debe devolver el item con `id` igual a `1`.
-
-### Prueba 5: consultar item inexistente
-
-Endpoint:
-
-```http
-GET /items/999
-```
-
-Resultado esperado:
-
-```text
-404 Not Found
-```
-
-### Prueba 6: actualizar item
-
-Endpoint:
-
-```http
-PUT /items/1
-```
-
-Body:
-
-```json
-{
-  "name": "Pikachu actualizado"
-}
-```
-
-Resultado esperado:
-
-Debe actualizar únicamente el campo `name`.
-
-### Prueba 7: consultar PokéAPI
-
-Endpoint:
-
-```http
-GET /external/pokemon/pikachu
-```
-
-Resultado esperado:
-
-```json
-{
-  "external_id": 25,
-  "name": "pikachu",
-  "source": "pokeapi"
-}
-```
-
-### Prueba 8: consultar Pokémon inexistente
-
-Endpoint:
-
-```http
-GET /external/pokemon/noexiste123
-```
-
-Resultado esperado:
-
-```text
-404 Not Found
-```
-
-## 10. Entrega
-
-Debes entregar:
-
-- Carpeta del proyecto con la estructura solicitada.
-- Código funcionando.
-- Captura o evidencia de `/docs`.
-- Captura o evidencia de al menos 4 pruebas realizadas.
-
-## 11. Criterios de evaluación
-
-| Criterio                                         |  Puntos |
-| ------------------------------------------------ | ------: |
-| Estructura correcta de carpetas                  |      20 |
-| Modelos Pydantic bien definidos                  |      20 |
-| Endpoints internos funcionando                   |      20 |
-| Manejo correcto de errores                       |      15 |
-| Uso correcto de `response_model` y `status_code` |      10 |
-| Consumo y adaptación de PokéAPI                  |      10 |
-| Orden, claridad y legibilidad del código         |       5 |
-| **Total**                                        | **100** |
-
-## 12. Preguntas de reflexión
-
-Responde brevemente:
-
-1. ¿Por qué `ItemCreate` no debe tener `id`?
-2. ¿Por qué `ItemUpdate` tiene campos opcionales?
-3. ¿Qué problema evita `response_model`?
-4. ¿Cuál es la diferencia entre un error `404` y un error `422`?
-5. ¿Por qué no conviene devolver toda la respuesta original de PokéAPI?
-6. ¿Por qué es mejor separar rutas, modelos y servicios en archivos distintos?
-
-## 13. Reto opcional
-
-Si terminas antes, agrega una validación adicional:
-
-- El campo `source` solo puede aceptar valores como `"manual"` o `"pokeapi"`.
-
-También puedes agregar un endpoint extra:
-
-```http
-GET /items/category/{category_name}
-```
-
-Este endpoint debe listar únicamente los items que pertenezcan a una categoría
-específica.
+consumir una API externa;
+guardar información en nuestra propia API.
