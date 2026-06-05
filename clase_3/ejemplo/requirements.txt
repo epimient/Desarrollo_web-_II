@@ -1,0 +1,8 @@
+# Dependencias del proyecto.
+# Instalar con: pip install -r requirements.txt
+
+fastapi          # Framework para crear la API.
+uvicorn          # Servidor local para ejecutar FastAPI.
+supabase         # Cliente de Python para conectarse a Supabase.
+pydantic-settings  # Permite leer variables de entorno con Pydantic.
+python-dotenv    # Soporte para cargar el archivo .env.

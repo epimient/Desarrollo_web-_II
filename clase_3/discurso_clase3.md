@@ -841,9 +841,7 @@ Solución:
 
 ## Error: no inserta datos
 
-Puede estar relacionado con permisos o Row Level Security.
-
-Revisa [dudas/07_rls_permisos_supabase.md](./dudas/07_rls_permisos_supabase.md).
+Puede estar relacionado con los permisos de la tabla. Verifica en Supabase que la tabla `items` exista en el schema `public` y que la API key que usas tenga permiso para insertar datos.
 
 ## Error: ID inválido
 

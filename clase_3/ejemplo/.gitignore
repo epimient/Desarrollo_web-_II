@@ -1,0 +1,12 @@
+# Archivo de credenciales (NUNCA debe subirse al repositorio).
+.env
+
+# Carpeta del entorno virtual de Python.
+.venv/
+
+# Archivos compilados de Python (los genera automáticamente).
+__pycache__/
+*.pyc
+
+# Caché de pytest (si usamos pruebas automatizadas).
+.pytest_cache/

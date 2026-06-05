@@ -709,8 +709,8 @@ app.include_router(item_router)</code></pre>
               <p>La clave puede ser incorrecta o no tener permisos para ejecutar la operacion solicitada.</p>
             </section>
             <section>
-              <h3>RLS</h3>
-              <p>Si Supabase bloquea inserts o selects, revisa las politicas de Row Level Security de la tabla.</p>
+              <h3>Permisos</h3>
+              <p>Si Supabase no inserta o no lee datos, verifica que la tabla exista en el schema <code>public</code> y que tu API key tenga permisos.</p>
             </section>
             <section>
               <h3>UUID</h3>

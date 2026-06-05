@@ -18,11 +18,21 @@ Tabla items = lugar donde guardamos filas
 
 Supabase facilita:
 
-- Crear proyectos.
-- Ejecutar SQL.
-- Ver tablas desde el navegador.
-- Obtener URL y API key.
-- Conectarse desde Python con un SDK.
+- Crear proyectos de base de datos con un clic.
+- Ejecutar SQL desde un editor en el navegador.
+- Ver y manejar tus tablas fácilmente.
+
+### ¿Supabase tiene una API?
+
+**Sí.** De hecho, esa es su magia principal. En lugar de tener que configurar servidores complicados para acceder a PostgreSQL, Supabase toma tu base de datos y automáticamente construye una **API REST** sobre ella. 
+
+### ¿Cómo nos conectamos a Supabase?
+
+Para conectarse, Supabase te da dos cosas:
+1. Una **URL** (la dirección en internet de tu API).
+2. Una **API Key** (una contraseña larga para demostrar que tienes permiso de entrar).
+
+En Python, instalamos la librería `supabase` y la usamos para conectarnos enviando la URL y la API Key, todo a través de internet.
 
 ## En esta clase
 
