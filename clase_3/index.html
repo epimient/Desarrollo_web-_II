@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clase 3 FastAPI + Supabase | Persistencia real con PostgreSQL</title>
+  <meta name="description"
+    content="Diapositivas interactivas para la Clase 3: evolucionar el backend de la Clase 2 conectando FastAPI con Supabase, variables de entorno y CRUD persistente.">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="icon-button" id="toggleNav" type="button" aria-label="Abrir indice" aria-expanded="false">
+        <span class="menu-icon"></span>
+      </button>
+
+      <div class="brand">
+        <span>FastAPI &middot; Clase 3</span>
+        <strong>Supabase y CRUD Persistente</strong>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="counter" aria-live="polite">
+          <span id="currentSlide">01</span>
+          <span>/</span>
+          <span id="totalSlides">00</span>
+        </div>
+        <button class="icon-button" id="fullscreenButton" type="button" aria-label="Pantalla completa">
+          <span class="fullscreen-icon"></span>
+        </button>
+      </div>
+    </header>
+
+    <div class="progress-track" aria-hidden="true">
+      <span id="progressBar"></span>
+    </div>
+
+    <div class="stage">
+      <aside class="sidebar" id="sidebar" aria-label="Indice de diapositivas">
+        <div class="sidebar-heading">Ruta de la Clase 3</div>
+        <ol id="slideList"></ol>
+      </aside>
+
+      <main class="deck" id="deck" tabindex="-1">
+        <!-- Slide 1: Inicio -->
+        <article class="slide is-active hero-slide" data-title="Inicio">
+          <div class="slide-grid two-columns">
+            <section>
+              <p class="eyebrow">FastAPI + Supabase</p>
+              <h1>De memoria volatil a persistencia real</h1>
+              <p class="lead">
+                En la Clase 2 la API podia crear, listar, actualizar y eliminar datos, pero esos datos vivian en una
+                lista temporal. En la Clase 3 esa misma API evoluciona: ahora guarda informacion en Supabase.
+              </p>
+            </section>
+            <section class="signal-panel">
+              <p class="panel-label">Idea central</p>
+              <p>
+                Cambiaremos <code>items_db = []</code> por una tabla real de PostgreSQL. Las rutas seguiran recibiendo
+                peticiones HTTP, pero la persistencia dejara de depender de la memoria del servidor local.
+              </p>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 2: Hilo conductor -->
+        <article class="slide" data-title="Clase 2 vs Clase 3">
+          <p class="eyebrow">1 &middot; Hilo conductor</p>
+          <h2>La Clase 3 no empieza desde cero: expande lo que ya construimos</h2>
+          <div class="content-grid">
+            <section>
+              <h3>Clase 2</h3>
+              <ul>
+                <li>Modelos Pydantic para validar entradas y respuestas.</li>
+                <li>Rutas con <code>APIRouter</code> para organizar endpoints.</li>
+                <li>CRUD funcional usando una lista en memoria.</li>
+                <li>Separacion inicial por carpetas y servicios externos.</li>
+              </ul>
+            </section>
+            <section class="signal-panel">
+              <h3>Clase 3</h3>
+              <ul>
+                <li>Los modelos se ajustan para trabajar con UUID y fechas.</li>
+                <li>Las rutas delegan el acceso a datos en una capa de servicio.</li>
+                <li>El CRUD escribe y lee desde una tabla de Supabase.</li>
+                <li>La estructura agrega configuracion, base de datos y servicios.</li>
+              </ul>
+            </section>
+          </div>
+          <p class="info-note">
+            No repetiremos que es FastAPI, BaseModel o APIRouter. Los usaremos como herramientas conocidas para resolver
+            el nuevo problema: persistir datos.
+          </p>
+        </article>
+
+        <!-- Slide 3: Pregunta de apertura -->
+        <article class="slide question-slide" data-title="Pregunta de apertura">
+          <p class="eyebrow">2 &middot; Apertura</p>
+          <h2>Si una API guarda productos en una lista de Python, &iquest;que ocurre cuando reiniciamos el servidor?</h2>
+          <div class="answer-cloud">
+            <span>La lista vuelve a estar vacia</span>
+            <span>Se pierde el historial</span>
+            <span>Los clientes no pueden confiar en el sistema</span>
+            <span>No sirve para produccion</span>
+            <span>Necesitamos una base de datos</span>
+          </div>
+        </article>
+
+        <!-- Slide 4: Volatilidad -->
+        <article class="slide" data-title="Memoria volatil">
+          <p class="eyebrow">3 &middot; El problema</p>
+          <h2>La RAM es rapida, pero no es memoria permanente</h2>
+          <div class="timeline">
+            <div>
+              <strong>1. Inicia Uvicorn</strong>
+              <span>Python carga el codigo y crea la variable <code>items_db = []</code>.</span>
+            </div>
+            <div>
+              <strong>2. Llegan peticiones</strong>
+              <span>Los datos se agregan a esa lista mientras el proceso esta vivo.</span>
+            </div>
+            <div>
+              <strong>3. Se detiene el servidor</strong>
+              <span>La memoria del proceso se libera al cerrar la terminal o recargar el programa.</span>
+            </div>
+            <div>
+              <strong>4. Todo comienza otra vez</strong>
+              <span>Al reiniciar, Python crea una lista nueva y los datos anteriores ya no existen.</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Slide 5: Analogia -->
+        <article class="slide" data-title="Analogia">
+          <p class="eyebrow">4 &middot; Analogia</p>
+          <h2>De la libreta temporal al archivo de biblioteca</h2>
+          <div class="slide-grid two-columns">
+            <section>
+              <p>
+                Una lista en memoria se parece a escribir prestamos de libros en una hoja que queda sobre el escritorio:
+                funciona por un momento, pero se pierde si alguien la bota o se cierra la sala.
+              </p>
+              <p>
+                Una base de datos se parece al sistema oficial de la biblioteca: cada registro queda guardado, puede
+                buscarse despues y no depende de que una persona recuerde lo ocurrido.
+              </p>
+            </section>
+            <section class="signal-panel">
+              <p class="panel-label">Traduccion al backend</p>
+              <p>
+                Supabase sera nuestro archivo permanente. FastAPI seguira siendo la puerta de entrada, pero los datos
+                viviran en PostgreSQL.
+              </p>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 6: CRUD en base de datos -->
+        <article class="slide" data-title="CRUD en base de datos">
+          <p class="eyebrow">5 &middot; CRUD persistente</p>
+          <h2>Los verbos HTTP ahora modifican filas de una tabla</h2>
+          <div class="endpoint-list">
+            <span><b>POST</b>Inserta una nueva fila en <code>items</code>.</span>
+            <span><b>GET</b>Consulta una o varias filas existentes.</span>
+            <span><b>PUT</b>Actualiza una fila filtrando por <code>id</code>.</span>
+            <span><b>DELETE</b>Elimina una fila filtrando por <code>id</code>.</span>
+          </div>
+          <p class="info-note">
+            La ruta HTTP no desaparece: cambia lo que hace por dentro. En lugar de modificar una lista local, llama a un
+            servicio que conversa con Supabase.
+          </p>
+        </article>
+
+        <!-- Slide 7: Supabase -->
+        <article class="slide" data-title="Supabase">
+          <p class="eyebrow">6 &middot; Persistencia</p>
+          <h2>Supabase nos da PostgreSQL listo para usar desde la API</h2>
+          <div class="content-grid three">
+            <section>
+              <h3>Base de datos</h3>
+              <p>
+                Supabase crea un proyecto con PostgreSQL, tablas, tipos de datos, consultas y seguridad configurable.
+              </p>
+            </section>
+            <section>
+              <h3>SDK de Python</h3>
+              <p>
+                Desde FastAPI usaremos el cliente de Supabase para hacer <code>insert</code>, <code>select</code>,
+                <code>update</code> y <code>delete</code>.
+              </p>
+            </section>
+            <section>
+              <h3>API realista</h3>
+              <p>
+                El backend deja de ser un prototipo de memoria y empieza a parecerse a una aplicacion desplegable.
+              </p>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 8: Tabla SQL -->
+        <article class="slide code-slide" data-title="Tabla items SQL">
+          <p class="eyebrow">7 &middot; Tabla</p>
+          <h2>Primero creamos la tabla <code>items</code> en Supabase</h2>
+          <pre><code class="language-sql">create extension if not exists "pgcrypto";
+
+create table if not exists public.items (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  description text,
+  price numeric(10, 2) not null check (price >= 0),
+  available boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_items_created_at
+  on public.items (created_at desc);
+
+create or replace function public.set_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_items_updated_at on public.items;
+
+create trigger trg_items_updated_at
+before update on public.items
+for each row
+execute function public.set_updated_at();</code></pre>
+        </article>
+
+        <!-- Slide 9: Tipos de datos -->
+        <article class="slide" data-title="Tipos de datos">
+          <p class="eyebrow">8 &middot; Tipos SQL</p>
+          <h2>La base de datos tambien valida la forma de los datos</h2>
+          <div class="model-grid">
+            <section>
+              <h3><code>uuid</code></h3>
+              <p>
+                Identificador unico generado por PostgreSQL con <code>gen_random_uuid()</code>. Evita depender de
+                contadores manuales dentro de Python.
+              </p>
+            </section>
+            <section>
+              <h3><code>timestamptz</code></h3>
+              <p>
+                Fechas con zona horaria. <code>created_at</code> y <code>updated_at</code> quedan generados por el
+                servidor para tener una fuente de tiempo confiable.
+              </p>
+            </section>
+            <section>
+              <h3><code>numeric</code>, <code>text</code>, <code>boolean</code></h3>
+              <p>
+                Definen precio, texto y disponibilidad. El <code>check (price &gt;= 0)</code> protege contra valores
+                invalidos incluso si el backend falla.
+              </p>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 10: Seguridad -->
+        <article class="slide" data-title="Seguridad en APIs">
+          <p class="eyebrow">9 &middot; Seguridad</p>
+          <h2>Las credenciales no deben quedar escritas directamente en el codigo</h2>
+          <div class="content-grid">
+            <section>
+              <h3>Riesgo</h3>
+              <pre><code class="language-python">SUPABASE_URL = "https://mi-proyecto.supabase.co"
+SUPABASE_KEY = "clave-secreta-en-el-codigo"</code></pre>
+              <p>
+                Si este archivo se sube a un repositorio, la clave queda expuesta junto con el proyecto.
+              </p>
+            </section>
+            <section class="signal-panel">
+              <h3>Practica segura</h3>
+              <pre><code class="language-python">SUPABASE_URL = settings.supabase_url
+SUPABASE_KEY = settings.supabase_key</code></pre>
+              <p>
+                El codigo lee variables de entorno y el archivo privado <code>.env</code> se queda en la maquina local.
+              </p>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 11: .env y .gitignore -->
+        <article class="slide code-slide" data-title=".env y .gitignore">
+          <p class="eyebrow">10 &middot; Configuracion local</p>
+          <h2>Guardamos credenciales en <code>.env</code> y evitamos subirlas con <code>.gitignore</code></h2>
+          <div class="slide-grid two-columns">
+            <section>
+              <h3><code>.env</code></h3>
+              <pre><code class="language-dotenv">SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_KEY=tu_clave_anon_o_service_role
+APP_NAME=API Clase 3</code></pre>
+            </section>
+            <section>
+              <h3><code>.gitignore</code></h3>
+              <pre><code class="language-gitignore">.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/</code></pre>
+            </section>
+          </div>
+          <p class="info-note">
+            Para pruebas locales puede usarse la clave anon si las politicas lo permiten. Las claves con mas permisos
+            requieren mas cuidado y nunca deben compartirse.
+          </p>
+        </article>
+
+        <!-- Slide 12: Carpetas -->
+        <article class="slide code-slide" data-title="Estructura evolucionada">
+          <p class="eyebrow">11 &middot; Arquitectura</p>
+          <h2>La estructura de la Clase 2 crece para separar configuracion, base de datos y servicios</h2>
+          <div class="slide-grid two-columns">
+            <section>
+              <h3>Clase 2</h3>
+              <pre><code class="language-text">app/
+  main.py
+  routes/
+    item_routes.py
+  schemas/
+    item_schema.py
+  services/
+    external_service.py</code></pre>
+            </section>
+            <section class="signal-panel">
+              <h3>Clase 3</h3>
+              <pre><code class="language-text">app/
+  main.py
+  core/
+    config.py
+  database/
+    supabase_client.py
+  routes/
+    item_routes.py
+  schemas/
+    item_schema.py
+  services/
+    item_service.py</code></pre>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 13: Instalacion -->
+        <article class="slide code-slide" data-title="Dependencias">
+          <p class="eyebrow">12 &middot; Instalacion</p>
+          <h2>Agregamos el SDK de Supabase y lectura de configuracion</h2>
+          <pre><code class="language-powershell">python -m venv .venv
+.\.venv\Scripts\activate
+
+pip install fastapi uvicorn supabase pydantic-settings python-dotenv
+pip freeze &gt; requirements.txt</code></pre>
+          <div class="feature-list">
+            <div>
+              <strong><code>supabase</code></strong>
+              <span>Cliente de Python para consultar la tabla desde FastAPI.</span>
+            </div>
+            <div>
+              <strong><code>pydantic-settings</code></strong>
+              <span>Permite leer variables desde el entorno y el archivo <code>.env</code>.</span>
+            </div>
+            <div>
+              <strong><code>python-dotenv</code></strong>
+              <span>Soporte practico para cargar el archivo local de configuracion.</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Slide 14: Configuracion -->
+        <article class="slide code-slide" data-title="config.py">
+          <p class="eyebrow">13 &middot; <code>app/core/config.py</code></p>
+          <h2>La configuracion evoluciona: ahora se lee desde <code>.env</code></h2>
+          <pre><code class="language-python">from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    supabase_url: str
+    supabase_key: str
+    app_name: str = "API Clase 3"
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+
+settings = Settings()</code></pre>
+          <p class="info-note">
+            En la Clase 2 configuramos la aplicacion directamente. Ahora centralizamos valores sensibles y reutilizables
+            en un objeto <code>settings</code>.
+          </p>
+        </article>
+
+        <!-- Slide 15: Cliente Supabase -->
+        <article class="slide code-slide" data-title="Cliente Supabase">
+          <p class="eyebrow">14 &middot; <code>app/database/supabase_client.py</code></p>
+          <h2>Inicializamos un cliente unico para hablar con Supabase</h2>
+          <pre><code class="language-python">from supabase import Client, create_client
+
+from app.core.config import settings
+
+
+supabase: Client = create_client(
+    settings.supabase_url,
+    settings.supabase_key,
+)</code></pre>
+          <p class="info-note">
+            Las rutas no necesitan conocer claves ni URLs. Usan servicios, y los servicios usan este cliente.
+          </p>
+        </article>
+
+        <!-- Slide 16: Schemas -->
+        <article class="slide code-slide" data-title="Schemas">
+          <p class="eyebrow">15 &middot; <code>app/schemas/item_schema.py</code></p>
+          <h2>Los schemas de la Clase 2 se adaptan a la tabla real</h2>
+          <pre><code class="language-python">from datetime import datetime
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+
+class ItemBase(BaseModel):
+    name: str = Field(min_length=2, max_length=80)
+    description: str | None = None
+    price: float = Field(gt=0)
+    available: bool = True
+
+
+class ItemCreate(ItemBase):
+    pass
+
+
+class ItemUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=2, max_length=80)
+    description: str | None = None
+    price: float | None = Field(default=None, gt=0)
+    available: bool | None = None
+
+
+class ItemResponse(ItemBase):
+    id: UUID
+    created_at: datetime
+    updated_at: datetime</code></pre>
+        </article>
+
+        <!-- Slide 17: Servicio create/list -->
+        <article class="slide code-slide" data-title="Servicio Insert y Select">
+          <p class="eyebrow">16 &middot; <code>app/services/item_service.py</code></p>
+          <h2>La capa de servicio reemplaza el acceso directo a <code>items_db</code></h2>
+          <pre><code class="language-python">from app.database.supabase_client import supabase
+from app.schemas.item_schema import ItemCreate
+
+
+TABLE_NAME = "items"
+
+
+def create_item(item: ItemCreate) -&gt; dict:
+    payload = item.model_dump()
+    response = supabase.table(TABLE_NAME).insert(payload).execute()
+    return response.data[0]
+
+
+def list_items() -&gt; list[dict]:
+    response = (
+        supabase.table(TABLE_NAME)
+        .select("*")
+        .order("created_at", desc=True)
+        .execute()
+    )
+    return response.data</code></pre>
+        </article>
+
+        <!-- Slide 18: Servicio update/delete -->
+        <article class="slide code-slide" data-title="Servicio Update y Delete">
+          <p class="eyebrow">17 &middot; Filtros y cambios parciales</p>
+          <h2><code>.eq()</code> selecciona la fila correcta y <code>exclude_unset</code> evita sobrescribir campos</h2>
+          <pre><code class="language-python"># Continuacion de app/services/item_service.py
+from fastapi import HTTPException, status
+
+from app.schemas.item_schema import ItemUpdate
+
+
+def get_item(item_id: str) -&gt; dict:
+    response = (
+        supabase.table(TABLE_NAME)
+        .select("*")
+        .eq("id", item_id)
+        .execute()
+    )
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Item no encontrado")
+    return response.data[0]
+
+
+def update_item(item_id: str, item: ItemUpdate) -&gt; dict:
+    payload = item.model_dump(exclude_unset=True, exclude_none=True)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No hay campos para actualizar",
+        )
+
+    response = (
+        supabase.table(TABLE_NAME)
+        .update(payload)
+        .eq("id", item_id)
+        .execute()
+    )
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Item no encontrado")
+    return response.data[0]
+
+
+def delete_item(item_id: str) -&gt; dict:
+    response = (
+        supabase.table(TABLE_NAME)
+        .delete()
+        .eq("id", item_id)
+        .execute()
+    )
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Item no encontrado")
+    return {"message": "Item eliminado"}</code></pre>
+        </article>
+
+        <!-- Slide 19: Rutas parte 1 -->
+        <article class="slide code-slide" data-title="Rutas POST y GET">
+          <p class="eyebrow">18 &middot; <code>app/routes/item_routes.py</code></p>
+          <h2>Las rutas conservan el contrato HTTP y delegan el trabajo al servicio</h2>
+          <pre><code class="language-python">from fastapi import APIRouter, status
+
+from app.schemas.item_schema import ItemCreate, ItemResponse
+from app.services import item_service
+
+
+router = APIRouter(prefix="/items", tags=["items"])
+
+
+@router.post(
+    "/",
+    response_model=ItemResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_item(item: ItemCreate):
+    return item_service.create_item(item)
+
+
+@router.get("/", response_model=list[ItemResponse])
+def list_items():
+    return item_service.list_items()</code></pre>
+        </article>
+
+        <!-- Slide 20: Rutas parte 2 -->
+        <article class="slide code-slide" data-title="Rutas por ID">
+          <p class="eyebrow">19 &middot; <code>app/routes/item_routes.py</code></p>
+          <h2>El UUID llega por la URL y se usa para filtrar en Supabase</h2>
+          <pre><code class="language-python"># Continuacion de app/routes/item_routes.py
+from uuid import UUID
+
+from app.schemas.item_schema import ItemUpdate
+
+
+@router.get("/{item_id}", response_model=ItemResponse)
+def get_item(item_id: UUID):
+    return item_service.get_item(str(item_id))
+
+
+@router.put("/{item_id}", response_model=ItemResponse)
+def update_item(item_id: UUID, item: ItemUpdate):
+    return item_service.update_item(str(item_id), item)
+
+
+@router.delete("/{item_id}")
+def delete_item(item_id: UUID):
+    return item_service.delete_item(str(item_id))</code></pre>
+          <p class="info-note">
+            FastAPI valida que <code>item_id</code> tenga forma de UUID antes de que el servicio haga la consulta.
+          </p>
+        </article>
+
+        <!-- Slide 21: Main -->
+        <article class="slide code-slide" data-title="main.py">
+          <p class="eyebrow">20 &middot; <code>app/main.py</code></p>
+          <h2>Registramos el enrutador para exponer los endpoints</h2>
+          <pre><code class="language-python">from fastapi import FastAPI
+
+from app.core.config import settings
+from app.routes.item_routes import router as item_router
+
+
+app = FastAPI(title=settings.app_name)
+
+
+@app.get("/")
+def health_check():
+    return {"status": "ok", "service": settings.app_name}
+
+
+app.include_router(item_router)</code></pre>
+        </article>
+
+        <!-- Slide 22: Ejecucion -->
+        <article class="slide" data-title="Ejecucion">
+          <p class="eyebrow">21 &middot; Probar la API</p>
+          <h2>Ejecutamos el servidor y probamos el CRUD desde Swagger UI</h2>
+          <div class="slide-grid two-columns">
+            <section>
+              <h3>Terminal</h3>
+              <pre><code class="language-powershell">uvicorn app.main:app --reload</code></pre>
+              <p>
+                Si el proyecto esta dentro de otra carpeta, primero entra a la carpeta donde vive <code>app/</code>.
+              </p>
+            </section>
+            <section class="signal-panel">
+              <h3>Navegador</h3>
+              <p>
+                Abre <code>http://127.0.0.1:8000/docs</code> y prueba <code>POST</code>, <code>GET</code>,
+                <code>PUT</code> y <code>DELETE</code> sobre <code>/items</code>.
+              </p>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 23: Flujo -->
+        <article class="slide" data-title="Flujo de datos">
+          <p class="eyebrow">22 &middot; Camino completo</p>
+          <h2>Un request viaja por capas antes de llegar a la base de datos</h2>
+          <div class="feature-list">
+            <div>
+              <strong>1. Cliente</strong>
+              <span>Swagger UI o una app envia JSON al endpoint.</span>
+            </div>
+            <div>
+              <strong>2. Ruta</strong>
+              <span>FastAPI recibe la peticion y valida parametros.</span>
+            </div>
+            <div>
+              <strong>3. Schema</strong>
+              <span>Pydantic verifica tipos, campos obligatorios y respuesta.</span>
+            </div>
+            <div>
+              <strong>4. Servicio</strong>
+              <span>La funcion decide que operacion de Supabase ejecutar.</span>
+            </div>
+            <div>
+              <strong>5. Supabase</strong>
+              <span>PostgreSQL inserta, lee, actualiza o elimina filas.</span>
+            </div>
+            <div>
+              <strong>6. Respuesta</strong>
+              <span>La API devuelve JSON con el resultado persistido.</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Slide 24: model_dump -->
+        <article class="slide code-slide" data-title="model_dump">
+          <p class="eyebrow">23 &middot; Pydantic a diccionario</p>
+          <h2>Supabase espera diccionarios; Pydantic entrega objetos</h2>
+          <div class="slide-grid two-columns">
+            <section>
+              <h3>Crear</h3>
+              <pre><code class="language-python">payload = item.model_dump()
+
+# ItemCreate(...)
+# se convierte en:
+{
+    "name": "Mouse",
+    "description": "Inalambrico",
+    "price": 85.90,
+    "available": True,
+}</code></pre>
+            </section>
+            <section>
+              <h3>Actualizar</h3>
+              <pre><code class="language-python">payload = item.model_dump(
+    exclude_unset=True,
+    exclude_none=True,
+)
+
+# Solo viajan los campos enviados
+# para no borrar datos existentes.</code></pre>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 25: Troubleshooting -->
+        <article class="slide" data-title="Troubleshooting">
+          <p class="eyebrow">24 &middot; Errores comunes</p>
+          <h2>Cuando algo falla, revisa por capa</h2>
+          <div class="error-grid">
+            <section>
+              <h3><code>.env</code></h3>
+              <p>Si las variables no cargan, revisa nombres, carpeta actual y que el archivo no tenga comillas raras.</p>
+            </section>
+            <section>
+              <h3>401 / 403</h3>
+              <p>La clave puede ser incorrecta o no tener permisos para ejecutar la operacion solicitada.</p>
+            </section>
+            <section>
+              <h3>RLS</h3>
+              <p>Si Supabase bloquea inserts o selects, revisa las politicas de Row Level Security de la tabla.</p>
+            </section>
+            <section>
+              <h3>UUID</h3>
+              <p>Si el ID no tiene formato valido, FastAPI responde antes de consultar la base de datos.</p>
+            </section>
+            <section>
+              <h3>Uvicorn</h3>
+              <p>Si aparece "Could not import module", ejecuta el comando desde la carpeta que contiene <code>app/</code>.</p>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 26: Reto -->
+        <article class="slide" data-title="Reto practico">
+          <p class="eyebrow">25 &middot; Practica</p>
+          <h2>Migra el backend de la Clase 2 para que use Supabase</h2>
+          <div class="content-grid">
+            <section>
+              <h3>Objetivo</h3>
+              <p>
+                Toma el CRUD que ya funcionaba con <code>items_db = []</code> y reemplaza la memoria temporal por la
+                tabla <code>items</code>.
+              </p>
+              <ul>
+                <li>Crear proyecto en Supabase.</li>
+                <li>Ejecutar el SQL de la tabla.</li>
+                <li>Configurar <code>.env</code> y <code>.gitignore</code>.</li>
+                <li>Implementar servicios y rutas.</li>
+              </ul>
+            </section>
+            <section class="signal-panel">
+              <h3>Evidencia esperada</h3>
+              <ul>
+                <li><code>POST /items</code> crea una fila visible en Supabase.</li>
+                <li><code>GET /items</code> lista datos despues de reiniciar Uvicorn.</li>
+                <li><code>PUT /items/{id}</code> actualiza solo los campos enviados.</li>
+                <li><code>DELETE /items/{id}</code> elimina la fila correcta.</li>
+              </ul>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 27: Criterios -->
+        <article class="slide" data-title="Criterios">
+          <p class="eyebrow">26 &middot; Evaluacion</p>
+          <h2>Criterios de calificacion</h2>
+          <div class="test-grid compact">
+            <section>
+              <h3>35%</h3>
+              <p>CRUD completo funcionando contra Supabase: crear, listar, consultar por ID, actualizar y eliminar.</p>
+            </section>
+            <section>
+              <h3>20%</h3>
+              <p>Estructura modular clara: <code>core</code>, <code>database</code>, <code>schemas</code>,
+                <code>services</code> y <code>routes</code>.</p>
+            </section>
+            <section>
+              <h3>20%</h3>
+              <p>Manejo seguro de configuracion con <code>.env</code> y <code>.gitignore</code>.</p>
+            </section>
+            <section>
+              <h3>15%</h3>
+              <p>Validaciones correctas con Pydantic y respuestas coherentes en Swagger UI.</p>
+            </section>
+            <section>
+              <h3>10%</h3>
+              <p>Evidencias ordenadas: capturas, pruebas y descripcion breve de los endpoints.</p>
+            </section>
+          </div>
+        </article>
+
+        <!-- Slide 28: Conclusiones -->
+        <article class="slide" data-title="Conclusiones">
+          <p class="eyebrow">27 &middot; Cierre</p>
+          <h2>La API ahora recuerda</h2>
+          <div class="closing-grid">
+            <div>FastAPI mantiene rutas limpias y contratos HTTP claros.</div>
+            <div>Los servicios concentran la comunicacion con Supabase.</div>
+            <div>PostgreSQL persiste los datos aunque el servidor se reinicie.</div>
+          </div>
+          <p class="lead" style="text-align: center; margin: var(--space-4) auto 0;">
+            La Clase 3 convierte el CRUD de practica en un backend con persistencia real, estructura modular y cuidado
+            basico de credenciales.
+          </p>
+        </article>
+      </main>
+    </div>
+
+    <footer class="deck-controls">
+      <button class="nav-button" id="prevSlide" type="button" aria-label="Diapositiva anterior">
+        <span aria-hidden="true">&lsaquo;</span>
+      </button>
+      <div class="slide-topic" id="slideTopic">Cargando tema...</div>
+      <button class="nav-button" id="nextSlide" type="button" aria-label="Diapositiva siguiente">
+        <span aria-hidden="true">&rsaquo;</span>
+      </button>
+    </footer>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+
+</html>
